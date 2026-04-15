@@ -21,7 +21,6 @@
     body{opacity:0;animation:fadeIn .3s forwards}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-    /* 修复1：禁止背景层点击（解决所有按钮点不动） */
     .bg-layer{
       position:fixed;
       inset:0;
@@ -31,18 +30,16 @@
       background-repeat:no-repeat;
       background-attachment:fixed;
       z-index:0;
-      pointer-events: none;
     }
     .bg-layer::after{
       content:"";
       position:absolute;
       inset:0;
       background:rgba(0,0,0,0.5);
-      pointer-events: none;
     }
 
-    .top-left{position:fixed;top:24px;left:24px;z-index:9999}
-    .top-right{position:fixed;top:24px;right:24px;z-index:9999}
+    .top-left{position:fixed;top:24px;left:24px;z-index:60}
+    .top-right{position:fixed;top:24px;right:24px;z-index:60}
     .icon-btn{border:none;background:0 0;color:#fff;font-size:18px;cursor:pointer;font-family:"ZCOOL KuaiLe", sans-serif}
 
     .dropdown{
@@ -51,13 +48,12 @@
       width:168px;
       border:none;
       border-radius:4px;
-      background:rgba(0,0,0,0.8);
+      background:transparent;
       backdrop-filter:none;
       overflow:hidden;
       opacity:0;
       visibility:hidden;
       transition:all 0.3s ease;
-      z-index:9999;
     }
     .dropdown.open{opacity:1;visibility:visible}
     #navMenu{left:0}#langMenu{right:0}
@@ -80,11 +76,10 @@
     .meta-time{font-size:12px;color:var(--muted);font-family:"ZCOOL KuaiLe", sans-serif}
     .plus-card{min-height:210px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:"ZCOOL KuaiLe", sans-serif;font-size:50px;background:transparent !important}
 
-    .overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.9);display:none;opacity:0;transition:opacity var(--t);padding:20px}
+    .overlay{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.9);display:none;opacity:0;transition:opacity var(--t);padding:20px}
     .overlay.open{display:flex;opacity:1}
     .detail-modal{width:min(1180px,100%);height:min(88vh,760px);margin:auto;border:1px solid var(--border);border-radius:4px;overflow:hidden;display:grid;grid-template-columns:1.15fr 1fr;background:#131313}
     
-    /* 修复2：修正CSS颜色错误 */
     .detail-left{border-right:1px solid var(--border);background:#0f0f0f;position:relative;display:flex;align-items:center;justify-content:center}
     .detail-slider{width:100%;height:100%;display:flex;overflow:hidden;position:relative}
     .detail-slide{min-width:100%;height:100%;transition:transform var(--t)}
@@ -107,7 +102,7 @@
     .info .value{font-size:14px;white-space:pre-wrap;font-family:"ZCOOL KuaiLe", sans-serif}
 
     .upload-modal{width:min(760px,100%);margin:auto;background:#131313;border:1px solid var(--border);border-radius:4px;padding:18px;max-height:90vh;overflow:auto;position:relative}
-    .upload-close{position:absolute;top:18px,right:18px;border:none;background:transparent;color:#fff;font-size:18px;cursor:pointer;padding:4px;transition:color var(--t);font-family:"ZCOOL KuaiLe", sans-serif}
+    .upload-close{position:absolute;top:18px;right:18px;border:none;background:transparent;color:#fff;font-size:18px;cursor:pointer;padding:4px;transition:color var(--t);font-family:"ZCOOL KuaiLe", sans-serif}
     .upload-close:hover{color:var(--accent)}
     .upload-title{font-family:"ZCOOL KuaiLe", sans-serif;font-size:40px;margin:0 0 16px}
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -177,8 +172,10 @@
     <h1 class="title" data-lang-key="page_title">小怡的照片墙</h1>
   </div>
   <p class="subtitle" data-lang-key="page_subtitle">分享你和小怡的照片</p>
-  <!-- 🔥 永久固定加号框，永远不消失！！！ -->
-  <section id="grid" class="grid"></section>
+  <!-- 🔥 🔥 🔥 加号框直接写死！永远不会消失！！！ -->
+  <section id="grid" class="grid">
+    <div class="plus-card" id="plusBtn">+</div>
+  </section>
 </main>
 
 <p class="footer-center" data-lang-key="footer_center">欲把西湖比西子 浓妆淡抹总相宜</p>
@@ -242,9 +239,6 @@
   const CLOUDINARY_CLOUD_NAME = "dkmpypzhb";
   const CLOUDINARY_UPLOAD_PRESET = "wdmkhbkn";
 
-  // 初始化Supabase
-  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
   const languagePack = {
     zh: {
       nav_home: "❤️ 首页",
@@ -306,9 +300,8 @@
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
 
-  // 🔥 页面一加载就渲染加号框，永久显示！！！
+  // 🔥 绑定加号点击事件
   document.addEventListener('DOMContentLoaded', () => {
-    $("#grid").innerHTML = `<div class="plus-card" id="plusBtn">+</div>`;
     $("#plusBtn").onclick = () => $("#uploadOverlay").classList.add("open");
   });
 
@@ -332,15 +325,9 @@
     return d ? new Date(d).toLocaleDateString(currentLang) : "";
   }
 
-  async function loadPosts() {
-    const { data } = await supabase.from('photos').select('*').order('date', { ascending: false });
-    posts = data || [];
-    renderGrid();
-  }
-
   function renderGrid(){
     const sortedPosts = [...posts].sort((a,b)=>new Date(b.date)-new Date(a.date));
-    // 保留永久加号框
+    // 只渲染照片，加号框已经写死在HTML里了
     $("#grid").innerHTML = sortedPosts.map(post=>`
       <div class="card" data-id="${post.id}">
         <div class="thumb-wrap">
@@ -352,7 +339,7 @@
           <div class="meta-time">${fmtDate(post.date)} ${post.location?"· "+post.location:""}</div>
         </div>
       </div>
-    `).join("") + `<div class="plus-card" id="plusBtn">+</div>`;
+    `).join("") + $("#grid").innerHTML;
 
     $$(".card").forEach(card=>{
       card.onclick = () => {
@@ -362,7 +349,6 @@
         $("#detailOverlay").classList.add("open");
       };
     });
-    $("#plusBtn").onclick = () => $("#uploadOverlay").classList.add("open");
   }
 
   function renderPostDetail(){
@@ -405,48 +391,38 @@
     $$(".dot").forEach((dot, i)=>dot.classList.toggle("active", i===currentImageIndex));
   }
 
-  window.onload = () => {
-    $(".slide-prev").onclick = () => {
-      currentImageIndex = (currentImageIndex -1 + currentPost.images.length) % currentPost.images.length;
-      updateImageSlider();
-    };
-    $(".slide-next").onclick = () => {
-      currentImageIndex = (currentImageIndex +1) % currentPost.images.length;
-      updateImageSlider();
-    };
+  $(".slide-prev").onclick = () => {
+    currentImageIndex = (currentImageIndex -1 + currentPost.images.length) % currentPost.images.length;
+    updateImageSlider();
+  };
+  $(".slide-next").onclick = () => {
+    currentImageIndex = (currentImageIndex +1) % currentPost.images.length;
+    updateImageSlider();
+  };
 
-    $("#uploadTrigger").onclick = () => $("#photoUpload").click();
-    $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
-    
-    $("#uploadForm").onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const name = fd.get("name");
-      const relation = fd.get("relation");
-      const location = fd.get("location");
-      const date = fd.get("date");
-      const shortDesc = fd.get("shortDesc");
-      const files = $("#photoUpload").files;
+  $("#uploadTrigger").onclick = () => $("#photoUpload").click();
+  $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
+  
+  $("#uploadForm").onsubmit = (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const name = fd.get("name");
+    const relation = fd.get("relation");
+    const location = fd.get("location");
+    const date = fd.get("date");
+    const shortDesc = fd.get("shortDesc");
+    const files = $("#photoUpload").files;
 
-      if(!name || !relation || !date || files.length === 0) {
-        alert("请填写完整信息！");
-        return;
-      }
+    if(!name || !relation || !date || files.length === 0) return;
 
-      const images = Array.from(files).map(file=>URL.createObjectURL(file));
-      posts.unshift({
-        id: "p"+Date.now(),
-        name, relation, location, date, shortDesc, images
-      });
+    const images = Array.from(files).map(file=>URL.createObjectURL(file));
+    posts.unshift({
+      id: "p"+Date.now()+Math.random(),
+      name, relation, location, date, shortDesc, images
+    });
 
-      await supabase.from('photos').insert([{
-        name, relation, location, date, shortDesc, images
-      }]);
-
-      $("#uploadOverlay").classList.remove("open");
-      renderGrid();
-      alert("上传成功！");
-    };
+    $("#uploadOverlay").classList.remove("open");
+    renderGrid();
   };
 
   $("#detailOverlay").onclick = (e) => e.target === $("#detailOverlay") && $("#detailOverlay").classList.remove("open");
@@ -479,8 +455,8 @@
     });
   });
 
-  loadPosts();
-  switchLanguage(currentLang);
+  renderGrid();
+  switchLanguage(currentLang)
 </script>
 </body>
 </html>
