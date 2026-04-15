@@ -11,34 +11,33 @@ const allowCors = fn => async (req, res) => {
 };
 
 const handler = async (req, res) => {
-  // 必须处理非 POST 请求
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    // 关键修正：在 Vercel 环境下，如果 req.body 为空字符串，需要手动处理
+    // 核心修复：兼容 Vercel 环境下 body 可能为字符串的情况
     let body = req.body;
     if (typeof body === 'string') {
-      try { body = JSON.parse(body); } catch(e) {}
+      try { body = JSON.parse(body); } catch (e) { console.error("Parse error"); }
     }
 
     const { message, language } = body || {};
-    const msg = message?.toLowerCase() || '';
+    const msg = (message || '').toLowerCase();
     let reply = '';
 
+    // 匹配你截图中的本地测试逻辑
     if (language === 'zh') {
       if (msg.includes('爱') || msg.includes('想你')) reply = '我也超级爱你呀❤️';
-      else if (msg.includes('你好') || msg.includes('hi')) reply = '你好呀😊';
+      else if (msg.includes('你好') || msg.includes('hi')) reply = '你再这样我可要生气咯！一直说这一个词，不能换个花样嘛。';
       else if (msg.includes('晚安')) reply = '晚安～做个好梦🌙';
       else reply = '我都有认真听哦🥰';
     } else if (language === 'en') {
       if (msg.includes('love') || msg.includes('miss')) reply = 'I love you too!❤️';
-      else if (msg.includes('hi') || msg.includes('hello')) reply = 'Hi there!😊';
       else reply = "I'm listening!💖";
     } else {
       reply = 'Сүйөм сени❤️';
     }
 
-    // 严格返回前端 if(result.code === 200) 所需的格式
+    // 统一返回前端识别的 code: 200 格式
     res.status(200).json({ 
       code: 200, 
       data: { reply: reply } 
