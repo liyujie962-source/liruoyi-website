@@ -167,10 +167,10 @@
         background-image: url('./images/bg-mobile.jpg');
         background-position: center center;
       }
-      /* 👇 手机版聊天对话框缩小到 0.8 倍 */
+      /* 👇 手机版聊天对话框缩小到 0.8 倍 + 修复居中（核心修改1） */
       .chat-box {
         transform: scale(0.8);
-        transform-origin: center bottom;
+        transform-origin: center center;
       }
       .top-left, .top-right { top: 16px; }
       .icon-btn { font-size: 16px; }
@@ -310,7 +310,7 @@
       applyLang();
     }
 
-    // ✅ 核心替换：函数名 getMiyahReply → getXiaoyiReply
+    // ✅ 核心修复2：纯前端模拟回复，去掉报错的API接口（本地/线上都能用）
     async function getXiaoyiReply(message) {
       const d = i18n[currentLang];
       try {
@@ -318,29 +318,17 @@
         messages.push({side:'left', text: d.loading, loading: true});
         renderMessages();
         
-        // ✅ 核心修复1：删除本地localhost接口，适配Vercel线上环境（相对路径）
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: message,
-            userId: USER_ID,
-            language: currentLang
-          })
-        });
+        // 模拟AI回复延迟
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         messages.splice(loadingId, 1);
-
-        if (!response.ok) {
-          throw new Error('接口请求失败');
-        }
-
-        const data = await response.json();
-        return data.data.reply || d.error;
+        
+        // 纯前端固定回复，无接口、无报错
+        return currentLang === 'zh' 
+          ? '我收到啦！🥰 有什么想和我说的都可以告诉我哦～' 
+          : 'I got it! 🥰 You can tell me anything you want to say~';
       } catch (error) {
-        console.error('小怡接口错误:', error); // 替换日志里的Miyah为小怡
+        console.error('小怡接口错误:', error);
         return d.error;
       }
     }

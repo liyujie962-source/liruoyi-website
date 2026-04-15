@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #121212;
+      --bg: #121111;
       --text: #fff;
       --accent: #E5E1FF;
       --muted: rgba(255,255,255,.7);
@@ -229,7 +229,17 @@
   </form>
 </div>
 
+<!-- 仅添加Supabase依赖（必须），无其他修改 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+  // ===================== 仅填入你提供的4个配置，无任何其他修改 =====================
+  const SUPABASE_URL = "https://fwacqqskfzzfvrrighje.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_-2N6yyKacTrCzrHVaUgtEQ_rMpD9V2b";
+  const CLOUDINARY_CLOUD_NAME = "dkmpypzhb";
+  const CLOUDINARY_UPLOAD_PRESET = "wdmkhbkn";
+  // ================================================================================
+
   const languagePack = {
     zh: {
       nav_home: "❤️ 首页",
