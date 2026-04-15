@@ -207,7 +207,6 @@
     };
     
     let currentLang = localStorage.getItem('selectedLanguage') || "zh";
-    const USER_ID = "yj_love_xiaoyi_forever";
     const messages=[{side:'left',text: currentLang === 'zh' ? 'Hi，我是小怡！你今天过得怎么样呀？' : 'Hi, I\'m Xiaoyi! How was your day?'}];
     
     const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
@@ -228,6 +227,7 @@
       $('.voice-btn').setAttribute('data-tip', d.chat.voiceTip);
     }
 
+    // 【关键修复】优化了请求和容错判断逻辑
     async function getXiaoyiReply(userMsg) {
       const d = i18n[currentLang];
       messages.push({side:'left', text: d.loading, loading: true});
@@ -236,25 +236,36 @@
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userMsg, language: currentLang })
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ 
+            message: userMsg, 
+            language: currentLang 
+          })
         });
 
-        const result = await response.json();
-        messages.pop(); // 移除 loading
+        // 如果 HTTP 状态不正常，直接抛错
+        if(!response.ok) throw new Error("HTTP Status " + response.status);
 
-        // 核心：增加多层级的数据容错
+        const result = await response.json();
+        messages.pop(); // 移除 loading 泡泡
+
+        // 强容错：尝试多种可能的数据结构获取回复
         if (result && result.code === 200 && result.data && result.data.reply) {
           return result.data.reply;
         } else if (result && result.reply) {
           return result.reply;
         } else {
-          console.error("Result structure mismatch:", result);
+          console.error("数据结构不符合预期:", result);
           return d.error;
         }
       } catch (error) {
-        console.error("Fetch failed:", error);
-        if (messages.length > 0 && messages[messages.length-1].loading) messages.pop();
+        console.error("请求失败:", error);
+        if (messages.length > 0 && messages[messages.length-1].loading) {
+          messages.pop();
+        }
         return d.error;
       }
     }
