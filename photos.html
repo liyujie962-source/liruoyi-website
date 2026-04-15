@@ -76,10 +76,17 @@
     .field span{font-size:12px;color:var(--accent);}
     .input{border:1px solid var(--border);border-radius:4px;background:#101010;color:#fff;padding:10px;outline:0;font-family:inherit}
     .upload-btn{border:1px dashed var(--border);border-radius:4px;padding:20px;text-align:center;color:var(--accent);cursor:pointer;margin-top:5px;}
-    .file-status{font-size:12px;color:var(--accent);margin-top:5px;display:none;word-break:break-all}
+    
+    /* 预览区样式 */
+    #filePreviewArea{margin-top:10px;padding:10px;background:rgba(255,255,255,0.05);border-radius:4px;display:none;font-size:13px;color:var(--accent);line-height:1.5}
+
     .form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
     .btn{border:1px solid var(--border);border-radius:4px;background:transparent;color:#fff;font-size:13px;padding:8px 12px;cursor:pointer;}
-    .btn:disabled{opacity:0.5;cursor:not-allowed}
+
+    .footer-center {position:fixed;left:50%;transform:translateX(-50%);bottom:20px;color:#999;font-size:12px;z-index:50;}
+    .footer-right {position:fixed;right:24px;bottom:20px;color:#999;font-size:12px;z-index:50;}
+    .globe-icon{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.4}
+    .title{margin:0;font-size:52px;font-weight:500;}
 
     @media(max-width:1024px){
       .grid{grid-template-columns:repeat(3,1fr);margin:0 30px}
@@ -108,7 +115,7 @@
 
 <div class="top-right">
   <button id="langBtn" class="icon-btn">
-    <svg class="globe-icon" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.4"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="5" ry="9"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse></svg>
+    <svg class="globe-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="5" ry="9"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse></svg>
   </button>
   <div id="langMenu" class="dropdown">
     <button class="dropdown-item" data-lang="zh">中文</button>
@@ -117,12 +124,15 @@
 </div>
 
 <main class="shell">
-  <div class="topbar"><h1 class="title" style="margin:0;font-size:52px;font-weight:500;">小怡的照片墙</h1></div>
+  <div class="topbar"><h1 class="title">小怡的照片墙</h1></div>
   <p class="subtitle">分享你和小怡的照片</p>
-  <section id="grid" class="grid"></section>
+  <section id="grid" class="grid">
+    <div class="plus-card" id="plusBtn" onclick="openUpload()">+</div>
+  </section>
 </main>
 
-<p class="footer-center" style="position:fixed;left:50%;transform:translateX(-50%);bottom:20px;color:#999;font-size:12px;z-index:50;">欲把西湖比西子 浓妆淡抹总相宜</p>
+<p class="footer-center">欲把西湖比西子 浓妆淡抹总相宜</p>
+<p class="footer-right">Designed by YJ Lee</p>
 
 <div id="detailOverlay" class="overlay">
   <div class="detail-modal">
@@ -138,7 +148,7 @@
 
 <div id="uploadOverlay" class="overlay">
   <form id="uploadForm" class="upload-modal">
-    <button type="button" class="upload-close" id="uploadCloseBtn">✕</button>
+    <button type="button" class="upload-close" onclick="closeUpload()">✕</button>
     <h2 class="upload-title">分享瞬间</h2>
     <div class="form-grid">
       <label class="field"><span>你的名字</span><input class="input" name="name" required></label>
@@ -148,13 +158,13 @@
       <label class="field full"><span>心情</span><input class="input" name="shortDesc"></label>
       <label class="field full">
         <span>照片（多选）</span>
-        <input type="file" id="photoUpload" multiple hidden accept="image/*">
-        <div class="upload-btn" id="uploadTrigger">+ 选择并预览照片</div>
-        <div id="fileStatus" class="file-status"></div>
+        <input type="file" id="photoUpload" multiple hidden accept="image/*" onchange="updatePreview(this)">
+        <div class="upload-btn" onclick="$('#photoUpload').click()">+ 点击上传照片</div>
+        <div id="filePreviewArea"></div>
       </label>
     </div>
     <div class="form-actions">
-      <button type="submit" class="btn" id="submitBtn">提交到照片墙</button>
+      <button type="submit" class="btn" id="submitBtn">提交</button>
     </div>
   </form>
 </div>
@@ -169,10 +179,8 @@
   let currentPost = null;
   let currentImageIndex = 0;
   const $ = s => document.querySelector(s);
-  const $$ = s => document.querySelectorAll(s);
 
-  // 初始化获取数据
-  async function fetchPosts() {
+  async function loadData() {
     const { data, error } = await _supabase.from('letters').select('*').order('created_at', { ascending: false });
     if (!error && data) {
       posts = data;
@@ -183,9 +191,9 @@
   function renderGrid() {
     const grid = $("#grid");
     const cardsHtml = posts.map(p => `
-      <div class="card" data-id="${p.id}">
+      <div class="card" onclick="openDetailById(${p.id})">
         <div class="thumb-wrap">
-          <img src="${p.images[0]}" class="thumb">
+          <img src="${p.images[0]}" class="thumb" loading="lazy">
           ${p.images.length > 1 ? `<div class="multi-photo-badge">${p.images.length}</div>` : ""}
         </div>
         <div class="meta">
@@ -194,126 +202,109 @@
         </div>
       </div>
     `).join("");
-    grid.innerHTML = cardsHtml + `<div class="plus-card" id="plusBtn">+</div>`;
-    $("#plusBtn").onclick = () => $("#uploadOverlay").classList.add("open");
-    $$(".card").forEach(card => card.onclick = () => {
-      currentPost = posts.find(p => p.id == card.dataset.id);
-      openDetail();
-    });
+    grid.innerHTML = `<div class="plus-card" onclick="openUpload()">+</div>` + cardsHtml;
   }
 
-  // 文件选择可视化反馈
-  $("#photoUpload").onchange = (e) => {
-    const files = e.target.files;
-    const status = $("#fileStatus");
-    if (files.length > 0) {
-      status.style.display = "block";
-      status.innerHTML = `✔ 已选择 ${files.length} 张照片: ` + Array.from(files).map(f => f.name).join(", ");
+  // 上传逻辑
+  window.openUpload = () => $("#uploadOverlay").classList.add("open");
+  window.closeUpload = () => {
+    $("#uploadOverlay").classList.remove("open");
+    $("#filePreviewArea").style.display = "none";
+    $("#uploadForm").reset();
+  };
+
+  window.updatePreview = (input) => {
+    const area = $("#filePreviewArea");
+    if (input.files.length > 0) {
+      area.style.display = "block";
+      area.innerHTML = `<strong>已选中 ${input.files.length} 张：</strong><br>` + 
+                       Array.from(input.files).map(f => `· ${f.name}`).join("<br>");
     } else {
-      status.style.display = "none";
+      area.style.display = "none";
     }
   };
 
-  // 上传图片到 Storage 的核心函数
-  async function uploadFilesToStorage(files) {
-    const uploadedUrls = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `wall/${fileName}`;
-
-      $("#submitBtn").textContent = `上传中 (${i+1}/${files.length})...`;
-
-      const { data, error } = await _supabase.storage
-        .from('photos') // 确保你在 Supabase 创建了名为 photos 的 bucket 且设为 Public
-        .upload(filePath, file);
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = _supabase.storage
-        .from('photos')
-        .getPublicUrl(filePath);
-      
-      uploadedUrls.push(publicUrl);
-    }
-    return uploadedUrls;
-  }
-
   $("#uploadForm").onsubmit = async (e) => {
     e.preventDefault();
-    const submitBtn = $("#submitBtn");
+    const btn = $("#submitBtn");
     const files = $("#photoUpload").files;
     if (files.length === 0) return alert("请先选择照片");
 
-    submitBtn.disabled = true;
+    btn.disabled = true;
+    const fd = new FormData(e.target);
+    
     try {
-      // 1. 先上传文件到存储空间
-      const imageUrls = await uploadFilesToStorage(files);
+      const urls = [];
+      for (let i = 0; i < files.length; i++) {
+        btn.textContent = `上传中 (${i+1}/${files.length})...`;
+        const file = files[i];
+        const path = `wall/${Date.now()}-${Math.random().toString(36).substr(2,5)}`;
+        const { error: upErr } = await _supabase.storage.from('photos').upload(path, file);
+        if (upErr) throw upErr;
+        const { data: { publicUrl } } = _supabase.storage.from('photos').getPublicUrl(path);
+        urls.push(publicUrl);
+      }
 
-      // 2. 将 URL 和表单存入数据库
-      const fd = new FormData(e.target);
-      const postData = {
+      const { error: dbErr } = await _supabase.from('letters').insert([{
         name: fd.get("name"),
         relation: fd.get("relation"),
         location: fd.get("location"),
         date: fd.get("date"),
         short_desc: fd.get("shortDesc"),
-        images: imageUrls // 存储真实的 URL 数组
-      };
+        images: urls
+      }]);
 
-      const { error } = await _supabase.from('letters').insert([postData]);
-      if (error) throw error;
-
-      alert("上传成功！");
-      location.reload(); // 刷新以同步数据库最新状态
+      if (dbErr) throw dbErr;
+      location.reload();
     } catch (err) {
       console.error(err);
-      alert("错误: " + (err.message || "上传失败，请检查网络或 Bucket 设置"));
-      submitBtn.disabled = false;
-      submitBtn.textContent = "重试提交";
+      alert("上传失败");
+      btn.disabled = false;
+      btn.textContent = "提交";
     }
   };
 
-  // 详情与轮播
-  function openDetail() {
+  // 详情逻辑
+  window.openDetailById = (id) => {
+    currentPost = posts.find(p => p.id == id);
     currentImageIndex = 0;
     $("#detailSlider").style.transform = `translateX(0)`;
     $("#detailSlider").innerHTML = currentPost.images.map(img => `<div class="detail-slide"><img src="${img}"></div>`).join("");
     $("#detailInfo").innerHTML = `
-      <button class="close-detail-btn" id="closeDetailBtn">✕</button>
+      <button class="close-detail-btn" onclick="$('#detailOverlay').classList.remove('open')">✕</button>
       <div class="info"><div class="value"><strong>来自：</strong>${currentPost.name} (${currentPost.relation})</div></div>
       <div class="info"><div class="value"><strong>日期：</strong>${currentPost.date}</div></div>
       <div class="info"><div class="value"><strong>地点：</strong>${currentPost.location || '-'}</div></div>
       <div class="info"><div class="value"><strong>心情：</strong>${currentPost.short_desc || '-'}</div></div>
     `;
-    $("#closeDetailBtn").onclick = () => $("#detailOverlay").classList.remove("open");
     updateDots();
     $("#prevBtn").style.display = $("#nextBtn").style.display = currentPost.images.length > 1 ? "flex" : "none";
     $("#detailOverlay").classList.add("open");
-  }
+  };
 
   function updateDots() {
     $("#dotsIndicator").innerHTML = currentPost.images.map((_, i) => `<div class="dot ${i===currentImageIndex?'active':''}"></div>`).join("");
   }
 
-  $("#nextBtn").onclick = () => {
+  $("#nextBtn").onclick = (e) => {
+    e.stopPropagation();
     currentImageIndex = (currentImageIndex + 1) % currentPost.images.length;
     $("#detailSlider").style.transform = `translateX(-${currentImageIndex * 100}%)`;
     updateDots();
   };
-  $("#prevBtn").onclick = () => {
+  $("#prevBtn").onclick = (e) => {
+    e.stopPropagation();
     currentImageIndex = (currentImageIndex - 1 + currentPost.images.length) % currentPost.images.length;
     $("#detailSlider").style.transform = `translateX(-${currentImageIndex * 100}%)`;
     updateDots();
   };
 
-  $("#uploadTrigger").onclick = () => $("#photoUpload").click();
-  $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
+  // 导航菜单
   $("#menuBtn").onclick = (e) => { e.stopPropagation(); $("#navMenu").classList.toggle("open"); };
-  document.onclick = () => $("#navMenu").classList.remove("open");
+  $("#langBtn").onclick = (e) => { e.stopPropagation(); $("#langMenu").classList.toggle("open"); };
+  document.onclick = () => { $(".dropdown").classList.remove("open"); };
 
-  fetchPosts();
+  loadData();
 </script>
 </body>
 </html>
