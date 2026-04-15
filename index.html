@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>欢迎来到小怡的世界</title>
+  <!-- 仅引入站酷快乐体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #121212;
+      --text: #ffffff;
+      --muted: #cccccc;
+      --muted-2: #999999;
+      --accent: #E5E1FF;
+      --border: rgba(255,255,255,0.1);
+      --t: 0.3s ease;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    /* 全局字体改为站酷快乐体 */
+    html, body { margin: 0; padding:0; min-height: 100%; background: var(--bg); color: var(--text); font-family: "ZCOOL KuaiLe", sans-serif; overflow-x: hidden; }
+    body { opacity: 0; animation: fadeIn var(--t) forwards; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .bg-layer { 
+      position: fixed; 
+      inset: 0; 
+      background-image: url('images/bg.jpg'); /* 电脑版背景图，完全不动 */
+      background-size: cover;
+      background-position: right center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      z-index: 0; 
+    }
+    .bg-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .top-left { position: fixed; top: 24px; left: 24px; z-index: 60; }
+    .top-right { position: fixed; top: 24px; right: 24px; z-index: 60; }
+
+    .icon-btn {
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px;
+      transition: opacity var(--t), color var(--t);
+      font-family: "ZCOOL KuaiLe", sans-serif; /* 按钮字体改为站酷快乐体 */
+    }
+    .icon-btn:hover { opacity: 0.8; }
+
+    /* 核心修改：整个下拉框完全透明，无黑底无黑边 */
+    .dropdown {
+      position: absolute;
+      top: 30px;
+      width: 168px;
+      border: none; /* 完全移除边框 */
+      border-radius: 4px;
+      background: transparent; /* 背景完全透明 */
+      backdrop-filter: none; /* 移除毛玻璃效果 */
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease; /* 保留淡入动画 */
+    }
+    .dropdown.open { opacity: 1; visibility: visible; }
+
+    #navMenu { left: 0; }
+    #langMenu { left: auto; right: 0; }
+
+    .dropdown-item {
+      width: 100%;
+      border: none;
+      background: transparent; /* 菜单项背景透明 */
+      color: #fff;
+      text-align: left;
+      padding: 10px 12px;
+      font-family: "ZCOOL KuaiLe", sans-serif; /* 下拉菜单字体改为站酷快乐体 */
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color var(--t), color var(--t);
+      display: block;
+      text-decoration: none;
+    }
+    .dropdown-item:hover { background: rgba(229, 225, 255, 0.12); }
+    .dropdown-item.active { color: var(--accent); }
+
+    .hero {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start; /* 调整对齐方式，适配文字排版 */
+      /* 电脑版完全恢复原样，不动！ */
+      padding: 180px 0 0 200px; 
+    }
+
+    /* 首页文字排版：参考图片样式 */
+    .hero-content {
+      position: relative;
+      width: 100%;
+    }
+    .welcome-line1 {
+      margin: 0;
+      font-family: "ZCOOL KuaiLe", sans-serif;
+      font-size: 60px; /* 可根据需要调整字号 */
+      font-weight: normal;
+      color: #fff;
+      line-height: 1.2;
+      position: relative;
+      left: 0;
+      top: 0;
+    }
+    .welcome-line2 {
+      margin: 20px 0 0 120px; /* 右下方偏移，匹配参考图 */
+      font-family: "ZCOOL KuaiLe", sans-serif;
+      font-size: 60px; /* 可根据需要调整字号 */
+      font-weight: normal;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    /* 底部文字保留原字号/位置，仅改字体和内容 */
+    .footer-center {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      z-index: 50;
+      font-size: 12px;
+      color: #666666;
+      font-family: "ZCOOL KuaiLe", sans-serif; /* 底部文字改为站酷快乐体 */
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .footer-right {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 50;
+      font-size: 12px;
+      color: #666666;
+      font-family: "ZCOOL KuaiLe", sans-serif; /* 底部文字改为站酷快乐体 */
+    }
+
+    .globe-icon {
+      width: 18px;
+      height: 18px;
+      display: block;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 1.4;
+    }
+
+    /* ========== 仅修改手机版，电脑版完全不动 ========== */
+    @media (max-width: 900px) {
+      .hero { 
+        padding: 160px 20px 0 60px;
+        align-items: flex-start;
+      }
+      /* 只加大右移距离，其他全部不动 */
+      .welcome-line1 {
+        font-size: 40px;
+        margin-left: 80px;
+      }
+      .welcome-line2 {
+        font-size: 40px;
+        margin: 15px 0 0 40px;
+      }
+
+      .footer-center { 
+        bottom: 16px; 
+        white-space: normal; 
+        width: 60%;
+        font-size: 11px;
+      }
+      .footer-right {
+        font-size: 11px;
+        right: 12px;
+        bottom: 16px;
+      }
+
+      .bg-layer {
+        background-image: url('images/bg-mobile.jpg');
+        background-position: center center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer"></div>
+
+  <div class="top-left">
+    <button id="menuBtn" class="icon-btn" aria-label="menu">☰</button>
+    <div id="navMenu" class="dropdown">
+      <a class="dropdown-item active" href="index.html" data-i18n="nav.home">❤️ 首页</a>
+      <a class="dropdown-item" href="photos.html" data-i18n="nav.photos">📸 小怡的照片墙</a>
+      <a class="dropdown-item" href="letter.html" data-i18n="nav.letter">💌 给小怡的话</a>
+      <a class="dropdown-item" href="chat.html" data-i18n="nav.chat">💬 和小怡聊聊天</a>
+    </div>
+  </div>
+
+  <div class="top-right">
+    <button id="langBtn" class="icon-btn" aria-label="language">
+      <svg class="globe-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <ellipse cx="12" cy="12" rx="5" ry="9"></ellipse>
+        <ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse>
+      </svg>
+    </button>
+    <div id="langMenu" class="dropdown">
+      <!-- 仅保留中文、英文 -->
+      <button class="dropdown-item" data-lang="zh">中文</button>
+      <button class="dropdown-item" data-lang="en">English</button>
+    </div>
+  </div>
+
+  <!-- 首页文字：按参考图排版，左上方“欢迎来到”，右下方“小怡的世界” -->
+  <main class="hero">
+    <div class="hero-content">
+      <h1 class="welcome-line1">欢迎来到</h1>
+      <p class="welcome-line2">小怡的世界！！</p>
+    </div>
+  </main>
+
+  <!-- 底部文案修改为指定内容，保留原位置和样式 -->
+  <p class="footer-center">欲把西湖比西子 浓妆淡抹总相宜</p>
+  <p class="footer-right">Designed by YJ Lee</p>
+
+  <script>
+    // 多语言包修改：替换所有Miyah为小怡，移除俄语/吉尔吉斯语，保留中英双语
+    const i18n = {
+      zh: { 
+        nav: { 
+          home: "❤️ 首页", 
+          photos: "📸 小怡的照片墙", 
+          letter: "💌 给小怡的话", 
+          chat: "💬 和小怡聊聊天" 
+        },
+        footer: { 
+          center: "欲把西湖比西子 浓妆淡抹总相宜" 
+        }
+      },
+      en: { 
+        nav: { 
+          home: "❤️ Home", 
+          photos: "📸 Xiaoyi's Photo Wall", 
+          letter: "💌 Words for Xiaoyi", 
+          chat: "💬 Chat with Xiaoyi" 
+        },
+        footer: { 
+          center: "欲把西湖比西子 浓妆淡抹总相宜" // 英文端保留中文诗句
+        }
+      }
+    };
+
+    let currentLang = localStorage.getItem('selectedLanguage') || "zh";
+    const langMenu = document.getElementById("langMenu");
+    const langBtn = document.getElementById("langBtn");
+    const menuBtn = document.getElementById("menuBtn");
+    const navMenu = document.getElementById("navMenu");
+
+    function applyLang() {
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const [group, key] = el.getAttribute("data-i18n").split(".");
+        const val = i18n[currentLang]?.[group]?.[key];
+        if (val) el.textContent = val;
+      });
+      document.querySelectorAll("[data-lang]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.lang === currentLang);
+      });
+    }
+
+    langBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      langMenu.classList.toggle("open");
+      navMenu.classList.remove("open");
+    });
+
+    document.querySelectorAll("[data-lang]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        currentLang = btn.dataset.lang;
+        localStorage.setItem('selectedLanguage', currentLang);
+        applyLang();
+        langMenu.classList.remove("open");
+      });
+    });
+
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      navMenu.classList.toggle("open");
+      langMenu.classList.remove("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!langMenu.contains(e.target) && e.target !== langBtn) langMenu.classList.remove("open");
+      if (!navMenu.contains(e.target) && e.target !== menuBtn) navMenu.classList.remove("open");
+    });
+
+    applyLang();
+  </script>
+</body>
+</html>

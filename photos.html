@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>小怡的照片墙</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #121212;
+      --text: #fff;
+      --accent: #E5E1FF;
+      --muted: rgba(255,255,255,.7);
+      --border: rgba(229,255,255,.4);
+      --t: 0.3s ease;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:"ZCOOL KuaiLe", sans-serif}
+    body{opacity:0;animation:fadeIn .3s forwards}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    .bg-layer{
+      position:fixed;
+      inset:0;
+      background-image:url('./images/bg.jpg');
+      background-size:cover;
+      background-position:right center;
+      background-repeat:no-repeat;
+      background-attachment:fixed;
+      z-index:0;
+    }
+    .bg-layer::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,0.5);
+    }
+
+    .top-left{position:fixed;top:24px;left:24px;z-index:60}
+    .top-right{position:fixed;top:24px;right:24px;z-index:60}
+    .icon-btn{border:none;background:0 0;color:#fff;font-size:18px;cursor:pointer;font-family:"ZCOOL KuaiLe", sans-serif}
+
+    .dropdown{
+      position:absolute;
+      top:30px;
+      width:168px;
+      border:none;
+      border-radius:4px;
+      background:transparent;
+      backdrop-filter:none;
+      overflow:hidden;
+      opacity:0;
+      visibility:hidden;
+      transition:all 0.3s ease;
+    }
+    .dropdown.open{opacity:1;visibility:visible}
+    #navMenu{left:0}#langMenu{right:0}
+    .dropdown-item{width:100%;border:none;background:0 0;color:#fff;padding:10px 12px;font-size:14px;cursor:pointer;transition:all var(--t);display:block;text-decoration:none;font-family:"ZCOOL KuaiLe", sans-serif}
+    .dropdown-item:hover{background:rgba(229,225,255,.12)}
+    .dropdown-item.active{color:var(--accent)}
+
+    .shell{position:relative;z-index:10;min-height:100vh;padding:80px 0 90px}
+    .topbar{margin:0 100px 14px 200px}
+    .subtitle{margin:0 100px 20px 200px;color:var(--muted);font-size:14px}
+
+    .grid{margin:0 100px 0 200px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+    .card,.plus-card{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:transparent;cursor:pointer}
+    .card:hover,.plus-card:hover{border-color:var(--accent)}
+    .thumb-wrap{width:100%;aspect-ratio:4/3;background:transparent;position:relative}
+    .multi-photo-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border-radius:4px;padding:2px 6px;font-size:10px;color:#fff;font-family:"ZCOOL KuaiLe", sans-serif}
+    .thumb{width:100%;height:100%;object-fit:cover;display:block}
+    .meta{border-top:1px solid var(--border);padding:10px 12px;background:transparent;}
+    .meta-name{font-size:14px;font-family:"ZCOOL KuaiLe", sans-serif}
+    .meta-time{font-size:12px;color:var(--muted);font-family:"ZCOOL KuaiLe", sans-serif}
+    .plus-card{min-height:210px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:"ZCOOL KuaiLe", sans-serif;font-size:50px;background:transparent !important}
+
+    .overlay{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.9);display:none;opacity:0;transition:opacity var(--t);padding:20px}
+    .overlay.open{display:flex;opacity:1}
+    .detail-modal{width:min(1180px,100%);height:min(88vh,760px);margin:auto;border:1px solid var(--border);border-radius:4px;overflow:hidden;display:grid;grid-template-columns:1.15fr 1fr;background:#131313}
+    
+    .detail-left{border-right:1px solid var(--border);background:#0f0f0f;position:relative;display:flex;align-items:center;justify-content:center}
+    .detail-slider{width:100%;height:100%;display:flex;overflow:hidden;position:relative}
+    .detail-slide{min-width:100%;height:100%;transition:transform var(--t)}
+    .detail-slide img{width:100%;height:100%;object-fit:cover}
+    
+    .slide-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.4);border:none;color:#fff;font-size:12px;width:24px;height:24px;border-radius:50%;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;padding:0;opacity:0;transition:opacity .2s;font-family:"ZCOOL KuaiLe", sans-serif}
+    .detail-left:hover .slide-btn{opacity:1}
+    .slide-prev{left:8px}
+    .slide-next{right:8px}
+    
+    .dots-indicator{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:10}
+    .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer}
+    .dot.active{background:#fff}
+
+    .detail-right{padding: 50px 18px 18px 18px;display:flex;flex-direction:column;gap:12px;overflow:auto;position:relative}
+    .close-detail-btn{position:absolute;top:18px;right:18px;border:1px solid var(--border);border-radius:4px;background:transparent;color:#fff;font-size:13px;padding:8px 12px;cursor:pointer;font-family:"ZCOOL KuaiLe", sans-serif}
+    .translate-btn{position:absolute;bottom:18px;right:18px;border:1px solid var(--border);border-radius:4px;background:transparent;color:#fff;font-size:13px;padding:8px 12px;cursor:pointer;font-family:"ZCOOL KuaiLe", sans-serif}
+    .btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(229,225,255,.12)}
+    .info{border:1px solid var(--border);border-radius:4px;background:rgba(229,225,255,.04);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+    .info .value{font-size:14px;white-space:pre-wrap;font-family:"ZCOOL KuaiLe", sans-serif}
+
+    .upload-modal{width:min(760px,100%);margin:auto;background:#131313;border:1px solid var(--border);border-radius:4px;padding:18px;max-height:90vh;overflow:auto;position:relative}
+    .upload-close{position:absolute;top:18px;right:18px;border:none;background:transparent;color:#fff;font-size:18px;cursor:pointer;padding:4px;transition:color var(--t);font-family:"ZCOOL KuaiLe", sans-serif}
+    .upload-close:hover{color:var(--accent)}
+    .upload-title{font-family:"ZCOOL KuaiLe", sans-serif;font-size:40px;margin:0 0 16px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .field{display:flex;flex-direction:column;gap:5px}
+    .field.full{grid-column:1/-1}
+    .field span{font-size:12px;color:var(--accent);font-family:"ZCOOL KuaiLe", sans-serif}
+    .input{border:1px solid var(--border);border-radius:4px;background:#101010;color:#fff;padding:10px;outline:0;transition:border-color var(--t);font-family:"ZCOOL KuaiLe", sans-serif}
+    .input:focus{border-color:var(--accent)}
+    .upload-btn{border:1px dashed var(--border);border-radius:4px;padding:20px;text-align:center;color:var(--accent);cursor:pointer;margin-top:5px;transition:border-color var(--t);font-family:"ZCOOL KuaiLe", sans-serif}
+    .upload-btn:hover{border-color:var(--accent)}
+    .form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+    .btn{border:1px solid var(--border);border-radius:4px;background:transparent;color:#fff;font-family:"ZCOOL KuaiLe", sans-serif;font-size:13px;padding:8px 12px;cursor:pointer;transition:all var(--t)}
+
+    .footer-center {position:fixed;left:50%;transform:translateX(-50%);bottom:20px;color:#999;font-size:12px;white-space:nowrap;z-index:50;font-family:"ZCOOL KuaiLe", sans-serif}
+    .footer-right {position:fixed;right:24px;bottom:20px;color:#999;font-size:12px;white-space:nowrap;z-index:50;font-family:"ZCOOL KuaiLe", sans-serif}
+    .globe-icon{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.4}
+
+    .title{margin:0;font-family:"ZCOOL KuaiLe", sans-serif;font-size:52px;font-weight:500;letter-spacing:1px}
+
+    @media(max-width:1024px){
+      .grid{grid-template-columns:repeat(3,1fr)}
+      .topbar,.subtitle,.grid{margin-left:30px;margin-right:30px}
+      .detail-modal{grid-template-columns:1fr}
+      .detail-left{border-right:none;border-bottom:1px solid var(--border);max-height:45vh}
+    }
+    @media(max-width:768px){
+      .grid{grid-template-columns:1fr}
+      .form-grid{grid-template-columns:1fr}
+      .footer-center {font-size:11px;white-space:normal;text-align:center;width:60%}
+      .footer-right {font-size:11px;right:12px}
+      
+      /* 👇 只加了这一段：手机版换背景，和首页一模一样 */
+      .bg-layer {
+        background-image: url('./images/bg-mobile.jpg');
+        background-position: center center;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-layer"></div>
+
+<div class="top-left">
+  <button id="menuBtn" class="icon-btn">☰</button>
+  <div id="navMenu" class="dropdown">
+    <a class="dropdown-item" href="index.html" data-lang-key="nav_home">❤️ 首页</a>
+    <a class="dropdown-item active" href="photos.html" data-lang-key="nav_photos">📸 小怡的照片墙</a>
+    <a class="dropdown-item" href="letter.html" data-lang-key="nav_letter">💌 给小怡的话</a>
+    <a class="dropdown-item" href="chat.html" data-lang-key="nav_chat">💬 和小怡聊天</a>
+  </div>
+</div>
+<div class="top-right">
+  <button id="langBtn" class="icon-btn">
+    <svg class="globe-icon" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"></circle>
+      <ellipse cx="12" cy="12" rx="5" ry="9"></ellipse>
+      <ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse>
+    </svg>
+  </button>
+  <div id="langMenu" class="dropdown">
+    <button class="dropdown-item" data-lang="zh">中文</button>
+    <button class="dropdown-item" data-lang="en">English</button>
+  </div>
+</div>
+
+<main class="shell">
+  <div class="topbar">
+    <h1 class="title" data-lang-key="page_title">小怡的照片墙</h1>
+  </div>
+  <p class="subtitle" data-lang-key="page_subtitle">分享你和小怡的照片</p>
+  <section id="grid" class="grid"></section>
+</main>
+
+<p class="footer-center" data-lang-key="footer_center">欲把西湖比西子 浓妆淡抹总相宜</p>
+<p class="footer-right">Designed by YJ Lee</p>
+
+<div id="detailOverlay" class="overlay">
+  <div class="detail-modal">
+    <div class="detail-left">
+      <button class="slide-btn slide-prev">‹</button>
+      <div class="detail-slider" id="detailSlider"></div>
+      <button class="slide-btn slide-next">›</button>
+      <div class="dots-indicator" id="dotsIndicator"></div>
+    </div>
+    <div class="detail-right" id="detailInfo">
+    </div>
+  </div>
+</div>
+
+<div id="uploadOverlay" class="overlay">
+  <form id="uploadForm" class="upload-modal">
+    <button type="button" class="upload-close" id="uploadCloseBtn">✕</button>
+    <h2 class="upload-title" data-lang-key="upload_title">分享瞬间</h2>
+    <div class="form-grid">
+      <label class="field">
+        <span data-lang-key="upload_name">你的名字</span>
+        <input class="input" name="name" required>
+      </label>
+      <label class="field">
+        <span data-lang-key="upload_relation">你和小怡的关系</span>
+        <input class="input" name="relation" required>
+      </label>
+      <label class="field">
+        <span data-lang-key="upload_location">拍摄地点</span>
+        <input class="input" name="location">
+      </label>
+      <label class="field">
+        <span data-lang-key="upload_date">拍摄日期</span>
+        <input class="input" name="date" type="date" required>
+      </label>
+      <label class="field full">
+        <span data-lang-key="upload_desc">想留下的小心情</span>
+        <input class="input" name="shortDesc">
+      </label>
+      <label class="field full">
+        <span data-lang-key="upload_photos">上传照片（可多选）</span>
+        <input type="file" name="images" accept="image/*" multiple hidden id="photoUpload">
+        <div class="upload-btn" id="uploadTrigger" data-lang-key="upload_btn">+ 点击上传照片</div>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn" data-lang-key="upload_submit">提交</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  const languagePack = {
+    zh: {
+      nav_home: "❤️ 首页",
+      nav_photos: "📸 小怡的照片墙",
+      nav_letter: "💌 给小怡的话",
+      nav_chat: "💬 和小怡聊天",
+      page_title: "小怡的照片墙",
+      page_subtitle: "分享你和小怡的照片",
+      footer_center: "欲把西湖比西子 浓妆淡抹总相宜",
+      upload_title: "分享瞬间",
+      upload_name: "你的名字",
+      upload_relation: "你和小怡的关系",
+      upload_location: "拍摄地点",
+      upload_date: "拍摄日期",
+      upload_desc: "想留下的小心情",
+      upload_photos: "上传照片（可多选）",
+      upload_btn: "+ 点击上传照片",
+      upload_submit: "提交",
+      detail_close: "✕",
+      detail_translate: "翻译",
+      detail_name: "姓名",
+      detail_relation: "关系",
+      detail_date: "日期",
+      detail_location: "地点",
+      detail_desc: "心情"
+    },
+    en: {
+      nav_home: "❤️ Home",
+      nav_photos: "📸 Xiaoyi's Photo Wall",
+      nav_letter: "💌 Letter to Xiaoyi",
+      nav_chat: "💬 Chat with Xiaoyi",
+      page_title: "Xiaoyi's Photo Wall",
+      page_subtitle: "Share your photos with Xiaoyi",
+      footer_center: "欲把西湖比西子 浓妆淡抹总相宜",
+      upload_title: "Share Moment",
+      upload_name: "Your Name",
+      upload_relation: "Your relationship with Xiaoyi",
+      upload_location: "Shooting Location",
+      upload_date: "Shooting Date",
+      upload_desc: "Your feelings",
+      upload_photos: "Upload Photos (multiple allowed)",
+      upload_btn: "+ Click to upload photos",
+      upload_submit: "Submit",
+      detail_close: "✕",
+      detail_translate: "Translate",
+      detail_name: "Name",
+      detail_relation: "Relation",
+      detail_date: "Date",
+      detail_location: "Location",
+      detail_desc: "Description"
+    }
+  };
+
+  let currentLang = localStorage.getItem('selectedLanguage') || "zh";
+
+  function switchLanguage(targetLang) {
+    currentLang = targetLang;
+    localStorage.setItem('selectedLanguage', targetLang);
+    
+    document.querySelectorAll('#langMenu .dropdown-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.lang === targetLang);
+    });
+    
+    document.querySelectorAll('[data-lang-key]').forEach(el => {
+      const key = el.dataset.langKey;
+      if (languagePack[targetLang][key]) {
+        el.textContent = languagePack[targetLang][key];
+      }
+    });
+    
+    if (currentPost) {
+      renderPostDetail();
+    }
+  }
+
+  const posts = [];
+
+  let currentPost = null;
+  let currentImageIndex = 0;
+  const grid = document.getElementById("grid");
+  const detailOverlay = document.getElementById("detailOverlay");
+  const detailSlider = document.getElementById("detailSlider");
+  const dotsIndicator = document.getElementById("dotsIndicator");
+  const detailInfo = document.getElementById("detailInfo");
+  const uploadOverlay = document.getElementById("uploadOverlay");
+  const uploadTrigger = document.getElementById("uploadTrigger");
+  const photoUpload = document.getElementById("photoUpload");
+  const uploadCloseBtn = document.getElementById("uploadCloseBtn");
+  const menuBtn = document.getElementById("menuBtn");
+  const navMenu = document.getElementById("navMenu");
+  const langBtn = document.getElementById("langBtn");
+  const langMenu = document.getElementById("langMenu");
+
+  menuBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    langMenu.classList.remove("open");
+    navMenu.classList.toggle("open");
+  });
+
+  langBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    navMenu.classList.remove("open");
+    langMenu.classList.toggle("open");
+  });
+
+  navMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+  langMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+
+  document.addEventListener('click', function() {
+    navMenu.classList.remove("open");
+    langMenu.classList.remove("open");
+  });
+
+  document.querySelectorAll('#langMenu .dropdown-item').forEach(item => {
+    item.addEventListener('click', function() {
+      const targetLang = this.dataset.lang;
+      switchLanguage(targetLang);
+      langMenu.classList.remove("open");
+    });
+  });
+
+  function fmtDate(d){
+    return d ? new Date(d).toLocaleDateString(currentLang) : "";
+  }
+
+  function renderGrid(){
+    grid.innerHTML = posts.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(post=>`
+      <div class="card" data-id="${post.id}">
+        <div class="thumb-wrap">
+          <img src="${post.images[0]}" class="thumb">
+          ${post.images.length > 1 ? `<div class="multi-photo-badge">${post.images.length}</div>` : ""}
+        </div>
+        <div class="meta">
+          <div class="meta-name">${post.name} · ${post.relation}</div>
+          <div class="meta-time">${fmtDate(post.date)} ${post.location?"· "+post.location:""}</div>
+        </div>
+      </div>
+    `).join("") + `<div class="plus-card" id="plusBtn">+</div>`;
+
+    grid.querySelectorAll(".card").forEach(card=>{
+      card.onclick = () => {
+        const postId = card.dataset.id;
+        currentPost = posts.find(p=>p.id === postId);
+        currentImageIndex = 0;
+        renderPostDetail();
+        detailOverlay.classList.add("open");
+      };
+    });
+    document.getElementById("plusBtn").onclick = () => uploadOverlay.classList.add("open");
+  }
+
+  function renderPostDetail(){
+    if(!currentPost) return;
+
+    detailSlider.innerHTML = currentPost.images.map(img=>`
+      <div class="detail-slide">
+        <img src="${img}" alt="${currentPost.name}的照片">
+      </div>
+    `).join("");
+
+    dotsIndicator.innerHTML = currentPost.images.map((_, index)=>`
+      <div class="dot ${index === currentImageIndex ? 'active' : ''}" data-index="${index}"></div>
+    `).join("");
+
+    const lang = languagePack[currentLang];
+    detailInfo.innerHTML = `
+      <button class="close-detail-btn">${lang.detail_close}</button>
+      <button class="translate-btn">${lang.detail_translate}</button>
+      <div class="info"><div class="value"><strong>${lang.detail_name}:</strong> ${currentPost.name}</div></div>
+      <div class="info"><div class="value"><strong>${lang.detail_relation}:</strong> ${currentPost.relation}</div></div>
+      <div class="info"><div class="value"><strong>${lang.detail_date}:</strong> ${fmtDate(currentPost.date)}</div></div>
+      <div class="info"><div class="value"><strong>${lang.detail_location}:</strong> ${currentPost.location || "-"}</div></div>
+      <div class="info"><div class="value"><strong>${lang.detail_desc}:</strong> ${currentPost.shortDesc || "-"}</div></div>
+    `;
+
+    document.querySelector(".close-detail-btn").onclick = () => detailOverlay.classList.remove("open");
+    document.querySelectorAll(".dot").forEach(dot=>{
+      dot.onclick = () => {
+        currentImageIndex = parseInt(dot.dataset.index);
+        updateImageSlider();
+      };
+    });
+    const slideBtns = document.querySelectorAll(".slide-btn");
+    slideBtns.forEach(btn=>{
+      btn.style.display = currentPost.images.length > 1 ? "flex" : "none";
+    });
+  }
+
+  function updateImageSlider(){
+    const slideWidth = detailSlider.offsetWidth;
+    detailSlider.style.transform = `translateX(-${currentImageIndex * slideWidth}px)`;
+    document.querySelectorAll(".dot").forEach((dot, index)=>{
+      dot.classList.toggle("active", index === currentImageIndex);
+    });
+  }
+
+  document.querySelector(".slide-prev").onclick = () => {
+    if(currentPost.images.length <= 1) return;
+    currentImageIndex = (currentImageIndex - 1 + currentPost.images.length) % currentPost.images.length;
+    updateImageSlider();
+  };
+  document.querySelector(".slide-next").onclick = () => {
+    if(currentPost.images.length <= 1) return;
+    currentImageIndex = (currentImageIndex + 1) % currentPost.images.length;
+    updateImageSlider();
+  };
+
+  uploadTrigger.onclick = () => photoUpload.click();
+  uploadCloseBtn.onclick = () => uploadOverlay.classList.remove("open");
+  document.getElementById("uploadForm").onsubmit = (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const name = fd.get("name");
+    const relation = fd.get("relation");
+    const location = fd.get("location");
+    const date = fd.get("date");
+    const shortDesc = fd.get("shortDesc");
+    const files = photoUpload.files;
+
+    if(!name || !relation || !date || files.length === 0) return;
+
+    const images = Array.from(files).map(file=>URL.createObjectURL(file));
+    posts.unshift({
+      id: "p"+Date.now()+Math.random(),
+      name,
+      relation,
+      location,
+      date,
+      shortDesc,
+      images
+    });
+
+    uploadOverlay.classList.remove("open");
+    renderGrid();
+  };
+
+  detailOverlay.onclick = (e) => e.target === detailOverlay && detailOverlay.classList.remove("open");
+  uploadOverlay.onclick = (e) => e.target === uploadOverlay && uploadOverlay.classList.remove("open");
+
+  renderGrid();
+  switchLanguage(currentLang);
+</script>
+</body>
+</html>

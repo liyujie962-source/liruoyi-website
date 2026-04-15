@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小怡 - Chat</title>
+  <!-- 替换为站酷快乐体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#121212;
+      --text:#fff;
+      --accent:#E5E1FF;
+      --bubble-dark:rgba(229,225,255,.12);
+      --bubble-light:rgba(229,225,255,.28);
+      --bubble-xiaoyi:rgba(45, 45, 85, 0.4); /* 替换 bubble-miyah 为 bubble-xiaoyi */
+      --muted:rgba(255,255,255,.72);
+      --border:rgba(229,225,255,.42);
+      --fade:.3s ease;
+      --voice-btn-gray:#444;
+      --voice-tip-color:#999;
+      --hint-text-color:#888;
+    }
+    *{box-sizing:border-box} 
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}
+    /* 全局替换为站酷快乐体 */
+    body{font-family:'ZCOOL KuaiLe', sans-serif;opacity:0;animation:fade var(--fade) forwards}
+    @keyframes fade{from{opacity:0}to{opacity:1}}
+    
+    .bg-layer{
+      position:fixed;
+      inset:0;
+      background-image:url('./images/bg.jpg');
+      background-size:cover;
+      background-position:right center;
+      background-repeat:no-repeat;
+      background-attachment:fixed;
+      z-index:0;
+    }
+    .bg-layer::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:rgba(0,0,0,0.5);
+    }
+    
+    .top-right { position: fixed; top: 24px; right: 24px; z-index: 60; }
+    .top-left { position: fixed; top: 24px; left: 24px; z-index: 60; }
+    .icon-btn {
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px;
+      transition: opacity var(--fade), color var(--fade);
+      /* 站酷快乐体 */
+      font-family: 'ZCOOL KuaiLe', sans-serif;
+    }
+    .icon-btn:hover { opacity: 0.8; }
+
+    /* 下拉菜单完全透明 */
+    .dropdown {
+      position: absolute;
+      top: 30px;
+      width: 168px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      backdrop-blur: none;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .dropdown.open { opacity: 1; visibility: visible; }
+    #navMenu { left: 0; }
+    #langMenu { left: auto; right: 0; }
+    .dropdown-item {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: #fff;
+      text-align: left;
+      padding: 10px 12px;
+      /* 站酷快乐体 */
+      font-family: "ZCOOL KuaiLe", sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color var(--fade), color var(--fade);
+      display: block;
+      text-decoration: none;
+    }
+    .dropdown-item:hover { background: rgba(229,225,255,.12); }
+    .dropdown-item.active { color: var(--accent); }
+    .globe-icon {
+      width: 18px;
+      height: 18px;
+      display: block;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 1.4;
+    }
+    
+    .shell{position:relative;z-index:10;min-height:100vh;padding-top:80px;padding-bottom:80px;display:flex;flex-direction:column;align-items:center}
+    .chat-box{width:min(820px,calc(100% - 32px));height:calc(100vh - 180px);border:1px solid var(--border);border-radius:20px;background:rgba(229,225,255,.04);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:8px}
+    
+    .messages{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
+    .messages::-webkit-scrollbar{width:6px}
+    .messages::-webkit-scrollbar-thumb{background-color:var(--muted);border-radius:3px}
+    .bubble{max-width:76%;border-radius:24px;padding:14px 18px;font-size:14px;line-height:1.6;transition:all var(--fade);position:relative;/* 站酷快乐体 */font-family: 'ZCOOL KuaiLe', sans-serif;}
+    .bubble.left{align-self:flex-start;background:var(--bubble-xiaoyi);border:1px solid rgba(229,225,255,.2);border-bottom-left-radius:8px} /* 替换 bubble-miyah 为 bubble-xiaoyi */
+    .bubble.right{align-self:flex-end;background:var(--bubble-light);border-bottom-right-radius:8px}
+    .bubble.loading::after {
+      content: '';
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.5);
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .composer{border-top:1px solid var(--border);padding:12px;display:flex;gap:10px;background:rgba(0,0,0,.25);align-items:center;border-bottom-left-radius:20px;border-bottom-right-radius:20px}
+    .input{flex:1;border:1px solid var(--border);border-radius:16px;background:#111;color:#fff;padding:12px 18px;font-size:14px;outline:none;transition:all var(--fade);/* 站酷快乐体 */font-family: 'ZCOOL KuaiLe', sans-serif;}
+    .input:focus{border-color:var(--accent);background:#151515;box-shadow:0 0 0 1px rgba(229,225,255,.2)}
+    .send-btn{border:1px solid var(--border);border-radius:16px;background:transparent;color:#fff;cursor:pointer;padding:0 18px;height:40px;font-size:14px;transition:all var(--fade);white-space:nowrap;/* 站酷快乐体 */font-family: 'ZCOOL KuaiLe', sans-serif;}
+    .send-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(229,225,255,.12)}
+    .send-btn:disabled{opacity:0.5;cursor:not-allowed;border-color:var(--border);color:#999;background:transparent}
+    
+    .voice-btn{width:40px;height:40px;border:1px solid var(--voice-btn-gray);border-radius:16px;background:var(--voice-btn-gray);color:#fff;cursor:not-allowed;display:flex;align-items:center;justify-content:center;position:relative;transition:all var(--fade)}
+    .voice-btn::after{content:attr(data-tip);position:absolute;right:-60px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--voice-tip-color);opacity:0;transition:opacity var(--fade);white-space:nowrap;/* 站酷快乐体 */font-family: 'ZCOOL KuaiLe', sans-serif;}
+    .voice-btn:hover::after{opacity:1}
+    .voice-btn svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    
+    .chat-hint{width:min(820px,calc(100% - 32px));text-align:left;font-size:11px;color:var(--hint-text-color);padding-left:4px;margin-bottom:10px;/* 站酷快乐体 */font-family: 'ZCOOL KuaiLe', sans-serif;}
+    
+    /* 统一底部文字样式 - 保留字体大小，替换为站酷快乐体 */
+    .footer-center {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      z-index: 50;
+      font-size: 12px;
+      color: #666666;
+      font-family: "ZCOOL KuaiLe", sans-serif;
+      text-align: center;
+    }
+    .footer-right {
+      position: fixed; right: 20px; bottom: 20px; z-index: 50;
+      font-size: 12px; color: #666666; font-family: "ZCOOL KuaiLe", sans-serif;
+    }
+    
+    @media (max-width:768px){
+      /* 👇 手机版换背景（和首页完全一致） */
+      .bg-layer {
+        background-image: url('./images/bg-mobile.jpg');
+        background-position: center center;
+      }
+      /* 👇 手机版聊天对话框缩小到 0.8 倍 */
+      .chat-box {
+        transform: scale(0.8);
+        transform-origin: center bottom;
+      }
+      .top-left, .top-right { top: 16px; }
+      .icon-btn { font-size: 16px; }
+      .dropdown { top: 28px; width: 150px; }
+      .dropdown-item { font-size: 13px; padding: 8px 10px; }
+      .shell{padding-top:70px;padding-bottom:70px}
+      .chat-box{height:calc(100vh - 160px);width:calc(100% - 20px);border-radius:16px}
+      .bubble{max-width:86%;padding:12px 16px;border-radius:20px}
+      .voice-btn{width:36px;height:36px;border-radius:14px}
+      .voice-btn svg{width:18px;height:18px}
+      .voice-btn::after{right:-55px;font-size:11px}
+      .send-btn{padding:0 14px;height:36px;font-size:13px;border-radius:14px}
+      .input{padding:10px 14px;font-size:13px;border-radius:14px}
+      .composer{border-bottom-left-radius:16px;border-bottom-right-radius:16px}
+      .chat-hint{width:calc(100% - 20px);font-size:10px}
+      .footer-center { bottom: 16px; font-size: 11px; white-space: normal; }
+      .footer-right { bottom: 16px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-layer"></div>
+  
+  <div class="top-left">
+    <button id="menuBtn" class="icon-btn" aria-label="menu">☰</button>
+    <div id="navMenu" class="dropdown">
+      <a class="dropdown-item" href="index.html" data-i18n="nav.home">❤️ 首页</a>
+      <a class="dropdown-item" href="photos.html" data-i18n="nav.photos">📸 小怡的照片墙</a>
+      <a class="dropdown-item" href="letter.html" data-i18n="nav.letter">💌 给小怡的话</a>
+      <a class="dropdown-item active" href="chat.html" data-i18n="nav.chat">💬 和小怡聊聊天</a>
+    </div>
+  </div>
+
+  <div class="top-right">
+    <button id="langBtn" class="icon-btn" aria-label="language">
+      <svg class="globe-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <ellipse cx="12" cy="12" rx="5" ry="9"></ellipse>
+        <ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse>
+      </svg>
+    </button>
+    <div id="langMenu" class="dropdown">
+      <!-- 仅保留中文、英文 -->
+      <button class="dropdown-item" data-lang="zh">中文</button>
+      <button class="dropdown-item" data-lang="en">English</button>
+    </div>
+  </div>
+
+  <main class="shell">
+    <section class="chat-box">
+      <div id="messages" class="messages"></div>
+      <form id="composer" class="composer">
+        <input id="msgInput" class="input" autocomplete="off" placeholder="输入你想说的话..." />
+        <button type="submit" class="send-btn" data-i18n="chat.send">发送</button>
+        <!-- 替换为苹果风格简洁电话图标 -->
+        <button type="button" class="voice-btn" disabled data-tip="即将上线">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 15.5C18.8 15.5 17.5 15.3 16.4 14.9C16.1 14.8 15.8 14.9 15.6 15.1L13.3 17.4C10.4 15.4 8 12.6 6 9.7L8.3 7.4C8.5 7.2 8.6 6.8 8.5 6.5C8.1 5.4 7.9 4.2 7.9 3C7.9 2.5 7.5 2 7 2H4C3.5 2 3 2.5 3 3C3 13.4 11.6 22 21 22C21.5 22 22 21.5 22 21V18C22 17.5 21.5 17 21 17C20.2 17 19.1 17.2 18 17.2C17.8 17.2 17.7 16.9 17.8 16.7L19.5 15.5C19.7 15.3 19.8 15 19.7 14.7C19.4 13.9 19.7 13.2 20.4 12.9C20.6 12.8 20.8 12.8 21 12.8V10.6C21 10.3 20.8 10 20.5 9.8C19.7 9.3 18.9 9 18 9C16.6 9 15.3 9.4 14.1 10.2C13.1 10.9 12.4 11.9 12.1 13C12 13.4 12.3 13.8 12.7 13.9C13.8 14.2 14.9 14.2 16 14C16.2 14 16.4 13.9 16.6 13.7L18.9 11.4C19.1 11.2 19.4 11.1 19.7 11.1C20.1 11.1 20.5 11.5 20.5 11.9V15.5H20Z"/>
+          </svg>
+        </button>
+      </form>
+    </section>
+    <div id="chatHint" class="chat-hint" data-i18n="chat.hint">每一句回复，皆基于 小怡 真实聊天记录与性格数据训练生成。</div>
+  </main>
+
+  <!-- 修改底部文案，保留字体大小和Designed by YJ Lee -->
+  <p class="footer-center">欲把西湖比西子 浓妆淡抹总相宜</p>
+  <p class="footer-right">Designed by YJ Lee</p>
+
+  <script>
+    const i18n={
+      zh:{
+        nav:{home:'❤️ 首页',photos:'📸 小怡的照片墙',letter:'💌 给小怡的话',chat:'💬 和小怡聊聊天'},
+        chat:{
+          send:'发送',
+          placeholder:'输入你想说的话...',
+          voiceTip:'即将上线',
+          hint:'每一句回复，皆基于 小怡 真实聊天记录与性格数据训练生成。'
+        },
+        footer: { center: "欲把西湖比西子 浓妆淡抹总相宜" },
+        loading: '正在回复中...',
+        // ✅ 替换为小怡风格的兜底回复
+        error: '哎呀，我这边系统有点小卡顿，暂时没法回复啦，等我缓一下再陪你聊～💛'
+      },
+      en:{
+        nav:{home:'❤️ Home',photos:'📸 Photos of Xiaoyi',letter:'💌 Words for Xiaoyi',chat:'💬 Chat with Xiaoyi'}, // 英文里小怡改为拼音Xiaoyi更规范
+        chat:{
+          send:'Send',
+          placeholder:'Type your message...',
+          voiceTip:'Coming soon',
+          hint:'Every reply is generated based on Xiaoyi\'s real chat records and personality data training.' // 替换小怡为Xiaoyi
+        },
+        footer: { center: "欲把西湖比西子 浓妆淡抹总相宜" },
+        loading: 'Replying...',
+        // ✅ 英文版本适配小怡风格
+        error: 'Oops, my system is a bit laggy right now. Let\'s chat when I\'m ready~ 💛'
+      }
+    };
+    
+    let currentLang = localStorage.getItem('selectedLanguage') || "zh";
+    // 替换首句中的Miyah为小怡，英文用Xiaoyi
+    const messages=[
+      {side:'left',text: currentLang === 'zh' ? 'Hi，我是小怡！你今天过得怎么样呀？' : 
+                          currentLang === 'en' ? 'Hi, I\'m Xiaoyi! How was your day?' : ''} // 英文小怡改为Xiaoyi
+    ];
+    
+    const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+    const USER_ID = "yj_love_xiaoyi_forever"; // 替换 USER_ID 里的 miyah 为 xiaoyi
+
+    function renderMessages(){
+      $('#messages').innerHTML=messages.map(m=>`<div class="bubble ${m.side} ${m.loading ? 'loading' : ''}">${m.text}</div>`).join('');
+      $('#messages').scrollTop=$('#messages').scrollHeight;
+    }
+
+    function applyLang(){
+      const d=i18n[currentLang];
+      $$('[data-i18n]').forEach(el=>{
+        const [a,b]=el.dataset.i18n.split('.');
+        el.textContent=d[a][b];
+      });
+      $('#msgInput').placeholder=d.chat.placeholder;
+      $('.voice-btn').setAttribute('data-tip', d.chat.voiceTip);
+      // 更新首句多语言
+      if(messages.length >= 1){
+        messages[0].text = currentLang === 'zh' ? 'Hi，我是小怡！你今天过得怎么样呀？' : 
+                           currentLang === 'en' ? 'Hi, I\'m Xiaoyi! How was your day?' : ''; // 英文小怡改为Xiaoyi
+        renderMessages();
+      }
+    }
+
+    function switchLang(targetLang){
+      currentLang=targetLang;
+      localStorage.setItem('selectedLanguage', targetLang);
+      $$('[data-lang]').forEach(btn=>{
+        btn.classList.toggle('active', btn.dataset.lang === currentLang);
+      });
+      applyLang();
+    }
+
+    // ✅ 核心替换：函数名 getMiyahReply → getXiaoyiReply
+    async function getXiaoyiReply(message) {
+      const d = i18n[currentLang];
+      try {
+        const loadingId = messages.length;
+        messages.push({side:'left', text: d.loading, loading: true});
+        renderMessages();
+        
+        // ✅ 核心修复1：删除本地localhost接口，适配Vercel线上环境（相对路径）
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: message,
+            userId: USER_ID,
+            language: currentLang
+          })
+        });
+
+        messages.splice(loadingId, 1);
+
+        if (!response.ok) {
+          throw new Error('接口请求失败');
+        }
+
+        const data = await response.json();
+        return data.data.reply || d.error;
+      } catch (error) {
+        console.error('小怡接口错误:', error); // 替换日志里的Miyah为小怡
+        return d.error;
+      }
+    }
+
+    $('#menuBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      $('#navMenu').classList.toggle('open');
+      $('#langMenu').classList.remove('open');
+    });
+    $('#langBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      $('#langMenu').classList.toggle('open');
+      $('#navMenu').classList.remove('open');
+    });
+    $$('[data-lang]').forEach(btn=>{
+      btn.addEventListener('click', () => {
+        switchLang(btn.dataset.lang);
+        $('#langMenu').classList.remove('open');
+      });
+    });
+    document.addEventListener('click', () => {
+      $('#navMenu').classList.remove('open');
+      $('#langMenu').classList.remove('open');
+    });
+
+    $('#composer').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const input=$('#msgInput');
+      const sendBtn = $('.send-btn');
+      const v=input.value.trim();
+      if(!v)return;
+
+      sendBtn.disabled = true;
+      messages.push({side:'right',text:v});
+      input.value='';
+      renderMessages();
+
+      // ✅ 核心替换：调用 getXiaoyiReply 而非 getMiyahReply
+      const reply = await getXiaoyiReply(v);
+      messages.push({side:'left',text:reply});
+      renderMessages();
+
+      sendBtn.disabled = false;
+    });
+
+    $$('[data-lang]').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    });
+    applyLang(); 
+    renderMessages();
+  </script>
+</body>
+</html>
