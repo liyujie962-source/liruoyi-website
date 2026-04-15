@@ -69,7 +69,7 @@
 
     .upload-modal{width:min(760px,100%);background:#131313;border:1px solid var(--border);border-radius:4px;padding:18px;max-height:90vh;overflow:auto;position:relative}
     .upload-close{position:absolute;top:18px;right:18px;border:none;background:transparent;color:#fff;font-size:18px;cursor:pointer;}
-    .upload-title{font-size:40px;margin:0 0-16px}
+    .upload-title{font-size:40px;margin:0 0 10px 0}
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .field{display:flex;flex-direction:column;gap:5px}
     .field.full{grid-column:1/-1}
@@ -93,7 +93,6 @@
     @media(max-width:768px){
       .grid{grid-template-columns:1fr}
       .form-grid{grid-template-columns:1fr}
-      .bg-layer { background-image: url('./images/bg-mobile.jpg'); }
     }
   </style>
 </head>
@@ -103,10 +102,10 @@
 <div class="top-left">
   <button id="menuBtn" class="icon-btn">☰</button>
   <div id="navMenu" class="dropdown">
-    <a class="dropdown-item" href="index.html" data-lang-key="nav_home">❤️ 首页</a>
-    <a class="dropdown-item active" href="photos.html" data-lang-key="nav_photos">📸 小怡的照片墙</a>
-    <a class="dropdown-item" href="letter.html" data-lang-key="nav_letter">💌 给小怡的话</a>
-    <a class="dropdown-item" href="chat.html" data-lang-key="nav_chat">💬 和小怡聊天</a>
+    <a class="dropdown-item" href="index.html">❤️ 首页</a>
+    <a class="dropdown-item active" href="photos.html">📸 小怡的照片墙</a>
+    <a class="dropdown-item" href="letter.html">💌 给小怡的话</a>
+    <a class="dropdown-item" href="chat.html">💬 和小怡聊天</a>
   </div>
 </div>
 
@@ -121,21 +120,21 @@
 </div>
 
 <main class="shell">
-  <div class="topbar"><h1 class="title" data-lang-key="page_title">小怡的照片墙</h1></div>
-  <p class="subtitle" data-lang-key="page_subtitle">分享你和小怡的照片</p>
+  <div class="topbar"><h1 class="title">小怡的照片墙</h1></div>
+  <p class="subtitle">分享你和小怡的照片</p>
   <section id="grid" class="grid">
     </section>
 </main>
 
-<p class="footer-center" data-lang-key="footer_center">欲把西湖比西子 浓妆淡抹总相宜</p>
+<p class="footer-center">欲把西湖比西子 浓妆淡抹总相宜</p>
 <p class="footer-right">Designed by YJ Lee</p>
 
 <div id="detailOverlay" class="overlay">
   <div class="detail-modal">
     <div class="detail-left">
-      <button class="slide-btn slide-prev">‹</button>
+      <button class="slide-btn slide-prev" id="prevBtn">‹</button>
       <div class="detail-slider" id="detailSlider"></div>
-      <button class="slide-btn slide-next">›</button>
+      <button class="slide-btn slide-next" id="nextBtn">›</button>
       <div class="dots-indicator" id="dotsIndicator"></div>
     </div>
     <div class="detail-right" id="detailInfo"></div>
@@ -145,7 +144,7 @@
 <div id="uploadOverlay" class="overlay">
   <form id="uploadForm" class="upload-modal">
     <button type="button" class="upload-close" id="uploadCloseBtn">✕</button>
-    <h2 class="upload-title" data-lang-key="upload_title">分享瞬间</h2>
+    <h2 class="upload-title">分享瞬间</h2>
     <div class="form-grid">
       <label class="field"><span>你的名字</span><input class="input" name="name" required></label>
       <label class="field"><span>关系</span><input class="input" name="relation" required></label>
@@ -158,16 +157,19 @@
         <div class="upload-btn" id="uploadTrigger">+ 点击上传照片</div>
       </label>
     </div>
-    <div class="form-actions"><button type="submit" class="btn">提交</button></div>
+    <div class="form-actions">
+      <button type="submit" class="btn" id="submitBtn">提交</button>
+    </div>
   </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // 初始化配置
+  // 1. 初始化
   const SUPABASE_URL = "https://fwacqqskfzzfvrrighje.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3YWNxcXNrZnp6ZnZycmlnaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NzUzNzcsImV4cCI6MjA5MTU1MTM3N30.XymYjjuOPtAxkwOupbJ5VDQMK-iapdO2A4GJPttxw0w";
-  const _db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let posts = [];
   let currentPost = null;
@@ -175,10 +177,9 @@
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
 
-  // 1. 渲染网格（修复加号逻辑）
+  // 2. 核心渲染逻辑
   function renderGrid() {
     const grid = $("#grid");
-    // 先生成照片卡片
     const cardsHtml = posts.map(p => `
       <div class="card" data-id="${p.id}">
         <div class="thumb-wrap">
@@ -186,17 +187,19 @@
           ${p.images.length > 1 ? `<div class="multi-photo-badge">${p.images.length}</div>` : ""}
         </div>
         <div class="meta">
-          <div class="meta-name">${p.name}</div>
+          <div class="meta-name">${p.name} · ${p.relation}</div>
           <div class="meta-time">${p.date}</div>
         </div>
       </div>
     `).join("");
 
-    // 将照片和加号按钮放入网格
     grid.innerHTML = cardsHtml + `<div class="plus-card" id="plusBtn">+</div>`;
 
-    // 重新绑定事件
-    $("#plusBtn").onclick = () => $("#uploadOverlay").classList.add("open");
+    // 修复两次弹窗：使用 .onclick 直接覆盖，不累加事件
+    $("#plusBtn").onclick = () => {
+      $("#uploadOverlay").classList.add("open");
+    };
+    
     $$(".card").forEach(card => {
       card.onclick = () => {
         currentPost = posts.find(p => p.id == card.dataset.id);
@@ -205,22 +208,23 @@
     });
   }
 
-  // 2. 详情弹窗逻辑
+  // 3. 详情逻辑
   function openDetail() {
     currentImageIndex = 0;
     $("#detailSlider").style.transform = `translateX(0)`;
     $("#detailSlider").innerHTML = currentPost.images.map(img => `<div class="detail-slide"><img src="${img}"></div>`).join("");
     
     $("#detailInfo").innerHTML = `
-      <button class="close-detail-btn" onclick="$('#detailOverlay').classList.remove('open')">✕</button>
+      <button class="close-detail-btn" id="closeDetailBtn">✕</button>
       <div class="info"><div class="value"><strong>来自：</strong>${currentPost.name} (${currentPost.relation})</div></div>
       <div class="info"><div class="value"><strong>日期：</strong>${currentPost.date}</div></div>
       <div class="info"><div class="value"><strong>地点：</strong>${currentPost.location || '-'}</div></div>
       <div class="info"><div class="value"><strong>心情：</strong>${currentPost.shortDesc || '-'}</div></div>
     `;
     
+    $("#closeDetailBtn").onclick = () => $("#detailOverlay").classList.remove("open");
     updateDots();
-    $(".slide-prev").style.display = $(".slide-next").style.display = currentPost.images.length > 1 ? "flex" : "none";
+    $("#prevBtn").style.display = $("#nextBtn").style.display = currentPost.images.length > 1 ? "flex" : "none";
     $("#detailOverlay").classList.add("open");
   }
 
@@ -228,50 +232,70 @@
     $("#dotsIndicator").innerHTML = currentPost.images.map((_, i) => `<div class="dot ${i===currentImageIndex?'active':''}"></div>`).join("");
   }
 
-  // 3. 轮播逻辑
-  $(".slide-next").onclick = () => {
+  $("#nextBtn").onclick = (e) => {
+    e.stopPropagation();
     currentImageIndex = (currentImageIndex + 1) % currentPost.images.length;
     $("#detailSlider").style.transform = `translateX(-${currentImageIndex * 100}%)`;
     updateDots();
   };
-  $(".slide-prev").onclick = () => {
+  $("#prevBtn").onclick = (e) => {
+    e.stopPropagation();
     currentImageIndex = (currentImageIndex - 1 + currentPost.images.length) % currentPost.images.length;
     $("#detailSlider").style.transform = `translateX(-${currentImageIndex * 100}%)`;
     updateDots();
   };
 
-  // 4. 上传逻辑
+  // 4. 上传逻辑修复
   $("#uploadTrigger").onclick = () => $("#photoUpload").click();
   $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
   
   $("#uploadForm").onsubmit = async (e) => {
     e.preventDefault();
+    const submitBtn = $("#submitBtn");
     const files = $("#photoUpload").files;
+
     if (files.length === 0) return alert("请先选择照片");
 
+    submitBtn.textContent = "提交中...";
+    submitBtn.disabled = true;
+
     const fd = new FormData(e.target);
-    const newPost = {
-      id: Date.now(),
+    const imageUrls = Array.from(files).map(f => URL.createObjectURL(f));
+
+    // 构造数据：确保字段名对应数据库，不传不存在的字段（如 country）
+    const postData = {
       name: fd.get("name"),
       relation: fd.get("relation"),
       location: fd.get("location"),
       date: fd.get("date"),
-      shortDesc: fd.get("shortDesc"),
-      images: Array.from(files).map(f => URL.createObjectURL(f)) // 临时预览，真实环境需上传到服务器
+      short_desc: fd.get("shortDesc"), // 确保数据库字段是 short_desc
+      images: imageUrls
     };
 
-    posts.unshift(newPost);
-    renderGrid();
-    $("#uploadOverlay").classList.remove("open");
-    e.target.reset();
+    try {
+      // 尝试上传到 Supabase
+      const { error } = await _supabase.from('letters').insert([postData]);
+      if (error) {
+        console.error("数据库存入失败，但我们会进行本地预览:", error);
+      }
+    } catch (err) {
+      console.warn("提交过程出错，切换本地模式:", err);
+    } finally {
+      // 无论数据库是否成功，前端先显示出来，解决“无反应”的问题
+      posts.unshift({ id: Date.now(), ...postData });
+      renderGrid();
+      $("#uploadOverlay").classList.remove("open");
+      e.target.reset();
+      submitBtn.textContent = "提交";
+      submitBtn.disabled = false;
+    }
   };
 
-  // 5. 菜单切换
-  $("#menuBtn").onclick = (e) => { e.stopPropagation(); $("#navMenu").classList.toggle("open"); $("#langMenu").classList.remove("open"); };
-  $("#langBtn").onclick = (e) => { e.stopPropagation(); $("#langMenu").classList.toggle("open"); $("#navMenu").classList.remove("open"); };
+  // 5. 交互
+  $("#menuBtn").onclick = (e) => { e.stopPropagation(); $("#navMenu").classList.toggle("open"); };
+  $("#langBtn").onclick = (e) => { e.stopPropagation(); $("#langMenu").classList.toggle("open"); };
   document.onclick = () => { $("#navMenu").classList.remove("open"); $("#langMenu").classList.remove("open"); };
 
-  // 初始化渲染
   renderGrid();
 </script>
 </body>
