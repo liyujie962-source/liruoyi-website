@@ -244,16 +244,23 @@
           body: JSON.stringify({ message: userMsg, userId: USER_ID, language: currentLang })
         });
 
+        // 如果 API 报错或 404，这里会抛出异常
+        if (!response.ok) throw new Error();
+
         const result = await response.json();
         messages.pop(); 
         
-        if (result.code === 200) {
+        // 关键：匹配后端返回的结构 { code: 200, data: { reply: "..." } }
+        if (result && result.code === 200 && result.data && result.data.reply) {
           return result.data.reply;
+        } else if (result && result.reply) {
+          // 容错处理：如果后端直接返回 { reply: "..." }
+          return result.reply;
         } else {
           return d.error;
         }
       } catch (error) {
-        messages.pop();
+        if (messages[messages.length-1]?.loading) messages.pop();
         return d.error;
       }
     }
@@ -285,7 +292,8 @@
       renderMessages();
 
       sendBtn.disabled = false; input.disabled = false;
-      input.focus();
+      // 保持焦点但避免 iOS 重复触发缩放
+      setTimeout(() => input.focus(), 10);
     });
 
     applyLang(); 
