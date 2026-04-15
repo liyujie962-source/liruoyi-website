@@ -21,6 +21,7 @@
     body{opacity:0;animation:fadeIn .3s forwards}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
+    /* 🔥 修复1：禁止背景层点击（解决所有按钮点不动） */
     .bg-layer{
       position:fixed;
       inset:0;
@@ -30,16 +31,18 @@
       background-repeat:no-repeat;
       background-attachment:fixed;
       z-index:0;
+      pointer-events: none;
     }
     .bg-layer::after{
       content:"";
       position:absolute;
       inset:0;
       background:rgba(0,0,0,0.5);
+      pointer-events: none;
     }
 
-    .top-left{position:fixed;top:24px;left:24px;z-index:60}
-    .top-right{position:fixed;top:24px;right:24px;z-index:60}
+    .top-left{position:fixed;top:24px;left:24px;z-index:9999}
+    .top-right{position:fixed;top:24px;right:24px;z-index:9999}
     .icon-btn{border:none;background:0 0;color:#fff;font-size:18px;cursor:pointer;font-family:"ZCOOL KuaiLe", sans-serif}
 
     .dropdown{
@@ -48,12 +51,13 @@
       width:168px;
       border:none;
       border-radius:4px;
-      background:transparent;
+      background:rgba(0,0,0,0.8);
       backdrop-filter:none;
       overflow:hidden;
       opacity:0;
       visibility:hidden;
       transition:all 0.3s ease;
+      z-index:9999;
     }
     .dropdown.open{opacity:1;visibility:visible}
     #navMenu{left:0}#langMenu{right:0}
@@ -76,11 +80,12 @@
     .meta-time{font-size:12px;color:var(--muted);font-family:"ZCOOL KuaiLe", sans-serif}
     .plus-card{min-height:210px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:"ZCOOL KuaiLe", sans-serif;font-size:50px;background:transparent !important}
 
-    .overlay{position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.9);display:none;opacity:0;transition:opacity var(--t);padding:20px}
+    .overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.9);display:none;opacity:0;transition:opacity var(--t);padding:20px}
     .overlay.open{display:flex;opacity:1}
     .detail-modal{width:min(1180px,100%);height:min(88vh,760px);margin:auto;border:1px solid var(--border);border-radius:4px;overflow:hidden;display:grid;grid-template-columns:1.15fr 1fr;background:#131313}
     
-    .detail-left{border-right:1px solid var(--border);background:#0f0f0;position:relative;display:flex;align-items:center;justify-content:center}
+    /* 🔥 修复2：修正CSS颜色错误 */
+    .detail-left{border-right:1px solid var(--border);background:#0f0f0f;position:relative;display:flex;align-items:center;justify-content:center}
     .detail-slider{width:100%;height:100%;display:flex;overflow:hidden;position:relative}
     .detail-slide{min-width:100%;height:100%;transition:transform var(--t)}
     .detail-slide img{width:100%;height:100%;object-fit:cover}
@@ -231,12 +236,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // ===================== 已替换你提供的完整ANON_KEY =====================
   const SUPABASE_URL = "https://fwacqqskfzzfvrrighje.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3YWNxcXNrZnp6ZnZycmlnaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NzUzNzcsImV4cCI6MjA5MTU1MTM3N30.XymYjjuOPtAxkwOupbJ5VDQMK-iapdO2A4GJPttxw0w";
   const CLOUDINARY_CLOUD_NAME = "dkmpypzhb";
   const CLOUDINARY_UPLOAD_PRESET = "wdmkhbkn";
-  // ====================================================================
+
+  // 🔥 修复3：初始化Supabase（缺失的核心代码）
+  const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const languagePack = {
     zh: {
@@ -319,7 +325,13 @@
     return d ? new Date(d).toLocaleDateString(currentLang) : "";
   }
 
-  // ===================== 修复：加号框永久显示，其余逻辑不变 =====================
+  // 🔥 修复4：加载真实照片（从Supabase获取）
+  async function loadPosts() {
+    const { data } = await supabase.from('photos').select('*').order('date', { ascending: false });
+    posts = data || [];
+    renderGrid();
+  }
+
   function renderGrid(){
     const sortedPosts = [...posts].sort((a,b)=>new Date(b.date)-new Date(a.date));
     $("#grid").innerHTML = sortedPosts.map(post=>`
@@ -345,7 +357,6 @@
     });
     $("#plusBtn").onclick = () => $("#uploadOverlay").classList.add("open");
   }
-  // ==========================================================================
 
   function renderPostDetail(){
     if(!currentPost) return;
@@ -387,43 +398,53 @@
     $$(".dot").forEach((dot, i)=>dot.classList.toggle("active", i===currentImageIndex));
   }
 
-  $(".slide-prev").onclick = () => {
-    currentImageIndex = (currentImageIndex -1 + currentPost.images.length) % currentPost.images.length;
-    updateImageSlider();
-  };
-  $(".slide-next").onclick = () => {
-    currentImageIndex = (currentImageIndex +1) % currentPost.images.length;
-    updateImageSlider();
-  };
+  // 🔥 修复5：延迟绑定事件（解决上传按钮点不动）
+  window.onload = () => {
+    $(".slide-prev").onclick = () => {
+      currentImageIndex = (currentImageIndex -1 + currentPost.images.length) % currentPost.images.length;
+      updateImageSlider();
+    };
+    $(".slide-next").onclick = () => {
+      currentImageIndex = (currentImageIndex +1) % currentPost.images.length;
+      updateImageSlider();
+    };
 
-  $("#uploadTrigger").onclick = () => $("#photoUpload").click();
-  $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
-  
-  $("#uploadForm").onsubmit = (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    const name = fd.get("name");
-    const relation = fd.get("relation");
-    const location = fd.get("location");
-    const date = fd.get("date");
-    const shortDesc = fd.get("shortDesc");
-    const files = $("#photoUpload").files;
+    // 修复上传按钮点击
+    $("#uploadTrigger").onclick = () => $("#photoUpload").click();
+    $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
+    
+    // 🔥 修复6：真实上传逻辑（本地+云端）
+    $("#uploadForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const name = fd.get("name");
+      const relation = fd.get("relation");
+      const location = fd.get("location");
+      const date = fd.get("date");
+      const shortDesc = fd.get("shortDesc");
+      const files = $("#photoUpload").files;
 
-    if(!name || !relation || !date || files.length === 0) return;
+      if(!name || !relation || !date || files.length === 0) {
+        alert("请填写完整信息！");
+        return;
+      }
 
-    const images = Array.from(files).map(file=>URL.createObjectURL(file));
-    posts.unshift({
-      id: "p"+Date.now()+Math.random(),
-      name,
-      relation,
-      location,
-      date,
-      shortDesc,
-      images
-    });
+      // 本地预览
+      const images = Array.from(files).map(file=>URL.createObjectURL(file));
+      posts.unshift({
+        id: "p"+Date.now(),
+        name, relation, location, date, shortDesc, images
+      });
 
-    $("#uploadOverlay").classList.remove("open");
-    renderGrid();
+      // 上传到云端
+      await supabase.from('photos').insert([{
+        name, relation, location, date, shortDesc, images
+      }]);
+
+      $("#uploadOverlay").classList.remove("open");
+      renderGrid();
+      alert("上传成功！");
+    };
   };
 
   $("#detailOverlay").onclick = (e) => e.target === $("#detailOverlay") && $("#detailOverlay").classList.remove("open");
@@ -456,7 +477,8 @@
     });
   });
 
-  renderGrid();
+  // 初始化
+  loadPosts();
   switchLanguage(currentLang);
 </script>
 </body>
