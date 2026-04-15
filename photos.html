@@ -16,7 +16,6 @@
     body{opacity:0;animation:fadeIn .3s forwards}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-    /* 背景图设置：完全恢复为相对路径 */
     .bg-layer{
       position:fixed;inset:0;
       background-image:url('./images/bg.jpg');
@@ -31,10 +30,12 @@
       .title{font-size:38px;}
     }
 
+    /* 导航与交互样式 - 同步参考代码 */
     .top-left{position:fixed;top:24px;left:24px;z-index:60}
     .top-right{position:fixed;top:24px;right:24px;z-index:60}
-    .icon-btn{border:none;background:0 0;color:#fff;font-size:18px;cursor:pointer;font-family:inherit}
-
+    .icon-btn{border:none;background:0 0;color:#fff;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .globe-icon{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.4}
+    
     .dropdown{position:absolute;top:30px;width:168px;border-radius:4px;background:rgba(18,17,17,0.95);opacity:0;visibility:hidden;transition:all 0.3s ease;border:1px solid var(--border)}
     .dropdown.open{opacity:1;visibility:visible}
     #navMenu{left:0}#langMenu{right:0}
@@ -120,10 +121,12 @@
 </div>
 
 <div class="top-right">
-  <button id="langBtn" class="icon-btn">🌐</button>
+  <button id="langBtn" class="icon-btn">
+    <svg class="globe-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="5" ry="9"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse></svg>
+  </button>
   <div id="langMenu" class="dropdown">
-    <button class="dropdown-item">中文</button>
-    <button class="dropdown-item">English</button>
+    <button class="dropdown-item" data-lang="zh">中文</button>
+    <button class="dropdown-item" data-lang="en">English</button>
   </div>
 </div>
 
@@ -183,7 +186,6 @@
   let currentPost = null;
   let currentImageIndex = 0;
 
-  // 加载数据
   async function loadData() {
     const { data, error } = await _supabase.from('letters').select('*').order('created_at', { ascending: false });
     if (!error && data) {
@@ -192,17 +194,16 @@
     }
   }
 
-  // 渲染瀑布流
   function renderGrid() {
     const grid = document.querySelector("#grid");
-    // 增加 p.images?. 保护，防止报错
-    const cardsHtml = posts.map(p => {
-      const firstImg = (p.images && p.images.length > 0) ? p.images[0] : '';
+    const cardsHtml = (posts || []).map(p => {
+      const images = p.images || [];
+      const firstImg = images.length > 0 ? images[0] : '';
       return `
         <div class="card" onclick="openDetailById(${p.id})">
           <div class="thumb-wrap">
             <img src="${firstImg}" class="thumb" loading="lazy">
-            ${(p.images && p.images.length > 1) ? `<div class="multi-photo-badge">${p.images.length}</div>` : ""}
+            ${(images.length > 1) ? `<div class="multi-photo-badge">${images.length}</div>` : ""}
           </div>
           <div class="meta">
             <div class="meta-name">${p.name || '匿名'} · ${p.relation || ''}</div>
@@ -214,7 +215,6 @@
     grid.innerHTML = `<div class="plus-card" onclick="openUpload()">+</div>` + cardsHtml;
   }
 
-  // 上传逻辑
   window.openUpload = () => document.querySelector("#uploadOverlay").classList.add("open");
   window.closeUpload = () => {
     document.querySelector("#uploadOverlay").classList.remove("open");
@@ -252,7 +252,6 @@
         urls.push(publicUrl);
       }
 
-      // 数据库提交：已彻底移除 country，只发送存在的列
       const { error: dbErr } = await _supabase.from('letters').insert([{
         name: fd.get("name"),
         relation: fd.get("relation"),
@@ -266,22 +265,19 @@
       location.reload();
     } catch (err) {
       console.error(err);
-      alert("上传失败，请查看控制台错误");
+      alert("上传失败，请检查控制台报错（通常是 Storage 的 RLS 策略没开）");
       btn.disabled = false;
       btn.textContent = "提交";
     }
   };
 
-  // 详情查看逻辑
   window.openDetailById = (id) => {
     currentPost = posts.find(p => p.id == id);
     if(!currentPost || !currentPost.images) return;
-    
     currentImageIndex = 0;
     const slider = document.querySelector("#detailSlider");
     slider.style.transform = `translateX(0)`;
     slider.innerHTML = currentPost.images.map(img => `<div class="detail-slide"><img src="${img}"></div>`).join("");
-    
     document.querySelector("#detailInfo").innerHTML = `
       <button class="close-detail-btn" onclick="document.querySelector('#detailOverlay').classList.remove('open')">✕</button>
       <div class="info"><div class="value"><strong>来自：</strong>${currentPost.name} (${currentPost.relation})</div></div>
@@ -313,9 +309,26 @@
     updateDots();
   };
 
-  // 导航逻辑
-  document.querySelector("#menuBtn").onclick = (e) => { e.stopPropagation(); document.querySelector("#navMenu").classList.toggle("open"); };
-  document.onclick = () => { document.querySelectorAll(".dropdown").forEach(d => d.classList.remove("open")); };
+  // 导航与菜单交互逻辑 - 完全同步参考代码
+  const setupMenu = (btnId, menuId) => {
+    const btn = document.querySelector(btnId);
+    const menu = document.querySelector(menuId);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+      // 关闭另一个菜单
+      const otherMenuId = menuId === '#navMenu' ? '#langMenu' : '#navMenu';
+      document.querySelector(otherMenuId).classList.remove('open');
+    };
+  };
+
+  setupMenu('#menuBtn', '#navMenu');
+  setupMenu('#langBtn', '#langMenu');
+
+  document.onclick = () => {
+    document.querySelector('#navMenu').classList.remove('open');
+    document.querySelector('#langMenu').classList.remove('open');
+  };
 
   loadData();
 </script>
