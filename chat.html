@@ -24,7 +24,6 @@
     }
     *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;} 
     
-    /* 核心修复：锁定 html/body 坐标，彻底防止 iOS 输入法弹出导致的页面位移 */
     html, body {
       margin: 0;
       height: 100%;
@@ -118,10 +117,8 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     
-    /* 适配 iOS 底部安全区 */
     .composer{border-top:1px solid var(--border);padding:12px;display:flex;gap:10px;background:rgba(0,0,0,.25);align-items:center;border-bottom-left-radius:20px;border-bottom-right-radius:20px; padding-bottom: calc(12px + env(safe-area-inset-bottom));}
     
-    /* 核心修复：iOS 字体必须为 16px，否则点击输入框页面会强制缩放偏移 */
     .input{flex:1;border:1px solid var(--border);border-radius:16px;background:#111;color:#fff;padding:12px 18px;font-size:16px;outline:none;transition:all var(--fade);font-family: 'ZCOOL KuaiLe', sans-serif;}
     .input:focus{border-color:var(--accent);background:#151515;box-shadow:0 0 0 1px rgba(229,225,255,.2)}
     
@@ -141,7 +138,6 @@
     
     @media (max-width:768px){
       .bg-layer { background-image: url('./images/bg-mobile.jpg'); background-position: center center; }
-      /* 核心修复：移动端不再 scale(0.8)，改用高度适配，防止点击区域错位 */
       .chat-box { 
         height: 62vh; 
         width: calc(100% - 24px); 
@@ -244,18 +240,13 @@
           body: JSON.stringify({ message: userMsg, userId: USER_ID, language: currentLang })
         });
 
-        // 如果 API 报错或 404，这里会抛出异常
         if (!response.ok) throw new Error();
 
         const result = await response.json();
         messages.pop(); 
         
-        // 关键：匹配后端返回的结构 { code: 200, data: { reply: "..." } }
         if (result && result.code === 200 && result.data && result.data.reply) {
           return result.data.reply;
-        } else if (result && result.reply) {
-          // 容错处理：如果后端直接返回 { reply: "..." }
-          return result.reply;
         } else {
           return d.error;
         }
@@ -292,7 +283,6 @@
       renderMessages();
 
       sendBtn.disabled = false; input.disabled = false;
-      // 保持焦点但避免 iOS 重复触发缩放
       setTimeout(() => input.focus(), 10);
     });
 
