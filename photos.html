@@ -21,7 +21,7 @@
     body{opacity:0;animation:fadeIn .3s forwards}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-    /* 🔥 修复1：禁止背景层点击（解决所有按钮点不动） */
+    /* 修复1：禁止背景层点击（解决所有按钮点不动） */
     .bg-layer{
       position:fixed;
       inset:0;
@@ -84,7 +84,7 @@
     .overlay.open{display:flex;opacity:1}
     .detail-modal{width:min(1180px,100%);height:min(88vh,760px);margin:auto;border:1px solid var(--border);border-radius:4px;overflow:hidden;display:grid;grid-template-columns:1.15fr 1fr;background:#131313}
     
-    /* 🔥 修复2：修正CSS颜色错误 */
+    /* 修复2：修正CSS颜色错误 */
     .detail-left{border-right:1px solid var(--border);background:#0f0f0f;position:relative;display:flex;align-items:center;justify-content:center}
     .detail-slider{width:100%;height:100%;display:flex;overflow:hidden;position:relative}
     .detail-slide{min-width:100%;height:100%;transition:transform var(--t)}
@@ -107,7 +107,7 @@
     .info .value{font-size:14px;white-space:pre-wrap;font-family:"ZCOOL KuaiLe", sans-serif}
 
     .upload-modal{width:min(760px,100%);margin:auto;background:#131313;border:1px solid var(--border);border-radius:4px;padding:18px;max-height:90vh;overflow:auto;position:relative}
-    .upload-close{position:absolute;top:18px;right:18px;border:none;background:transparent;color:#fff;font-size:18px;cursor:pointer;padding:4px;transition:color var(--t);font-family:"ZCOOL KuaiLe", sans-serif}
+    .upload-close{position:absolute;top:18px,right:18px;border:none;background:transparent;color:#fff;font-size:18px;cursor:pointer;padding:4px;transition:color var(--t);font-family:"ZCOOL KuaiLe", sans-serif}
     .upload-close:hover{color:var(--accent)}
     .upload-title{font-family:"ZCOOL KuaiLe", sans-serif;font-size:40px;margin:0 0 16px}
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -177,6 +177,7 @@
     <h1 class="title" data-lang-key="page_title">小怡的照片墙</h1>
   </div>
   <p class="subtitle" data-lang-key="page_subtitle">分享你和小怡的照片</p>
+  <!-- 🔥 永久固定加号框，永远不消失！！！ -->
   <section id="grid" class="grid"></section>
 </main>
 
@@ -241,7 +242,7 @@
   const CLOUDINARY_CLOUD_NAME = "dkmpypzhb";
   const CLOUDINARY_UPLOAD_PRESET = "wdmkhbkn";
 
-  // 🔥 修复3：初始化Supabase（缺失的核心代码）
+  // 初始化Supabase
   const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const languagePack = {
@@ -305,6 +306,12 @@
   const $ = s => document.querySelector(s);
   const $$ = s => document.querySelectorAll(s);
 
+  // 🔥 页面一加载就渲染加号框，永久显示！！！
+  document.addEventListener('DOMContentLoaded', () => {
+    $("#grid").innerHTML = `<div class="plus-card" id="plusBtn">+</div>`;
+    $("#plusBtn").onclick = () => $("#uploadOverlay").classList.add("open");
+  });
+
   function switchLanguage(targetLang) {
     currentLang = targetLang;
     localStorage.setItem('selectedLanguage', targetLang);
@@ -325,7 +332,6 @@
     return d ? new Date(d).toLocaleDateString(currentLang) : "";
   }
 
-  // 🔥 修复4：加载真实照片（从Supabase获取）
   async function loadPosts() {
     const { data } = await supabase.from('photos').select('*').order('date', { ascending: false });
     posts = data || [];
@@ -334,6 +340,7 @@
 
   function renderGrid(){
     const sortedPosts = [...posts].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    // 保留永久加号框
     $("#grid").innerHTML = sortedPosts.map(post=>`
       <div class="card" data-id="${post.id}">
         <div class="thumb-wrap">
@@ -398,7 +405,6 @@
     $$(".dot").forEach((dot, i)=>dot.classList.toggle("active", i===currentImageIndex));
   }
 
-  // 🔥 修复5：延迟绑定事件（解决上传按钮点不动）
   window.onload = () => {
     $(".slide-prev").onclick = () => {
       currentImageIndex = (currentImageIndex -1 + currentPost.images.length) % currentPost.images.length;
@@ -409,11 +415,9 @@
       updateImageSlider();
     };
 
-    // 修复上传按钮点击
     $("#uploadTrigger").onclick = () => $("#photoUpload").click();
     $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
     
-    // 🔥 修复6：真实上传逻辑（本地+云端）
     $("#uploadForm").onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -429,14 +433,12 @@
         return;
       }
 
-      // 本地预览
       const images = Array.from(files).map(file=>URL.createObjectURL(file));
       posts.unshift({
         id: "p"+Date.now(),
         name, relation, location, date, shortDesc, images
       });
 
-      // 上传到云端
       await supabase.from('photos').insert([{
         name, relation, location, date, shortDesc, images
       }]);
@@ -477,7 +479,6 @@
     });
   });
 
-  // 初始化
   loadPosts();
   switchLanguage(currentLang);
 </script>
