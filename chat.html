@@ -222,7 +222,7 @@
       const d=i18n[currentLang];
       $$('[data-i18n]').forEach(el=>{
         const [a,b]=el.dataset.i18n.split('.');
-        el.textContent=d[a][b];
+        if(d[a] && d[a][b]) el.textContent=d[a][b];
       });
       $('#msgInput').placeholder=d.chat.placeholder;
       $('.voice-btn').setAttribute('data-tip', d.chat.voiceTip);
@@ -237,21 +237,24 @@
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userMsg, userId: USER_ID, language: currentLang })
+          body: JSON.stringify({ message: userMsg, language: currentLang })
         });
 
-        if (!response.ok) throw new Error();
-
         const result = await response.json();
-        messages.pop(); 
-        
+        messages.pop(); // 移除 loading
+
+        // 核心：增加多层级的数据容错
         if (result && result.code === 200 && result.data && result.data.reply) {
           return result.data.reply;
+        } else if (result && result.reply) {
+          return result.reply;
         } else {
+          console.error("Result structure mismatch:", result);
           return d.error;
         }
       } catch (error) {
-        if (messages[messages.length-1]?.loading) messages.pop();
+        console.error("Fetch failed:", error);
+        if (messages.length > 0 && messages[messages.length-1].loading) messages.pop();
         return d.error;
       }
     }

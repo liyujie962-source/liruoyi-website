@@ -14,17 +14,17 @@ const handler = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    // 核心修复：兼容 Vercel 环境下 body 可能为字符串的情况
+    // 兼容 Vercel 各种 Body 传输情况
     let body = req.body;
-    if (typeof body === 'string') {
-      try { body = JSON.parse(body); } catch (e) { console.error("Parse error"); }
+    if (typeof body === 'string' && body.length > 0) {
+      try { body = JSON.parse(body); } catch (e) { console.error("Parse Error"); }
     }
 
     const { message, language } = body || {};
     const msg = (message || '').toLowerCase();
     let reply = '';
 
-    // 匹配你截图中的本地测试逻辑
+    // 严格匹配你本地测试正常的逻辑
     if (language === 'zh') {
       if (msg.includes('爱') || msg.includes('想你')) reply = '我也超级爱你呀❤️';
       else if (msg.includes('你好') || msg.includes('hi')) reply = '你再这样我可要生气咯！一直说这一个词，不能换个花样嘛。';
@@ -37,7 +37,7 @@ const handler = async (req, res) => {
       reply = 'Сүйөм сени❤️';
     }
 
-    // 统一返回前端识别的 code: 200 格式
+    // 必须返回 status 200 且结构包含 code: 200
     res.status(200).json({ 
       code: 200, 
       data: { reply: reply } 
