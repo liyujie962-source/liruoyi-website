@@ -14,7 +14,6 @@ const handler = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    // 兼容字符串和对象形式的 Body
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch (e) {}
@@ -34,10 +33,10 @@ const handler = async (req, res) => {
       if (msg.includes('love') || msg.includes('miss')) reply = 'I love you too!❤️';
       else reply = "I'm listening!💖";
     } else {
-      reply = 'Сүйөм сени❤️'; // 默认吉尔吉斯语回复
+      reply = 'Сүйөм сени❤️';
     }
 
-    // 严格返回前端期待的 code 200 格式
+    // 发送标准格式
     res.status(200).json({ 
       code: 200, 
       data: { reply: reply } 

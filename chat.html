@@ -9,296 +9,106 @@
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet" />
   <style>
     :root{
-      --bg:#121212;
-      --text:#fff;
-      --accent:#E5E1FF;
-      --bubble-dark:rgba(229,225,255,.12);
+      --bg:#121212; --text:#fff; --accent:#E5E1FF;
       --bubble-light:rgba(229,225,255,.28);
       --bubble-xiaoyi:rgba(45, 45, 85, 0.4);
-      --muted:rgba(255,255,255,.72);
       --border:rgba(229,225,255,.42);
-      --fade:.3s ease;
-      --voice-btn-gray:#444;
-      --voice-tip-color:#999;
-      --hint-text-color:#888;
     }
-    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;} 
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;} 
+    html, body { margin:0; height:100%; background:var(--bg); color:var(--text); overflow:hidden; font-family:'ZCOOL KuaiLe', sans-serif; }
     
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-      position: fixed; 
-      width: 100%;
-    }
+    .bg-layer{ position:fixed; inset:0; background:url('./images/bg.jpg') center/cover no-repeat; z-index:0; }
+    .bg-layer::after{ content:""; position:absolute; inset:0; background:rgba(0,0,0,0.5); }
     
-    body{font-family:'ZCOOL KuaiLe', sans-serif;opacity:0;animation:fade var(--fade) forwards}
-    @keyframes fade{from{opacity:0}to{opacity:1}}
+    .shell{ position:relative; z-index:10; height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .chat-box{ width:min(820px,calc(100% - 32px)); height:70vh; border:1px solid var(--border); border-radius:20px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); display:flex; flex-direction:column; overflow:hidden; }
     
-    .bg-layer{
-      position:fixed;
-      inset:0;
-      background-image:url('./images/bg.jpg');
-      background-size:cover;
-      background-position:right center;
-      background-repeat:no-repeat;
-      z-index:0;
-    }
-    .bg-layer::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:rgba(0,0,0,0.5);
-    }
+    .messages{ flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
+    .bubble{ max-width:76%; padding:12px 18px; border-radius:20px; font-size:14px; line-height:1.6; position:relative; }
+    .bubble.left{ align-self:flex-start; background:var(--bubble-xiaoyi); border-bottom-left-radius:4px; }
+    .bubble.right{ align-self:flex-end; background:var(--bubble-light); border-bottom-right-radius:4px; }
     
-    .top-right { position: fixed; top: 24px; right: 24px; z-index: 60; }
-    .top-left { position: fixed; top: 24px; left: 24px; z-index: 60; }
-    .icon-btn {
-      border: none;
-      background: transparent;
-      color: #fff;
-      font-size: 18px;
-      line-height: 1;
-      cursor: pointer;
-      padding: 4px;
-      transition: opacity var(--fade), color var(--fade);
-      font-family: 'ZCOOL KuaiLe', sans-serif;
-    }
-    .icon-btn:hover { opacity: 0.8; }
+    .bubble.loading::after { content: '...'; animation: blink 1s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 
-    .dropdown {
-      position: absolute;
-      top: 30px;
-      width: 168px;
-      border: none;
-      border-radius: 4px;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(10px);
-      overflow: hidden;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-    .dropdown.open { opacity: 1; visibility: visible; }
-    #navMenu { left: 0; }
-    #langMenu { left: auto; right: 0; }
-    .dropdown-item {
-      width: 100%;
-      border: none;
-      background: transparent;
-      color: #fff;
-      text-align: left;
-      padding: 10px 12px;
-      font-family: "ZCOOL KuaiLe", sans-serif;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background-color var(--fade), color var(--fade);
-      display: block;
-      text-decoration: none;
-    }
-    .dropdown-item:hover { background: rgba(229,225,255,.12); }
-    .dropdown-item.active { color: var(--accent); }
-    .globe-icon { width: 18px; height: 18px; display: block; stroke: #ffffff; fill: none; stroke-width: 1.4; }
-    
-    .shell{position:relative;z-index:10;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-    .chat-box{width:min(820px,calc(100% - 32px));height:calc(100vh - 200px);border:1px solid var(--border);border-radius:20px;background:rgba(229,225,255,.04);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:8px}
-    
-    .messages{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px;scrollbar-width:thin;scrollbar-color:var(--muted) transparent; -webkit-overflow-scrolling: touch;}
-    .messages::-webkit-scrollbar{width:6px}
-    .messages::-webkit-scrollbar-thumb{background-color:var(--muted);border-radius:3px}
-    .bubble{max-width:76%;border-radius:24px;padding:14px 18px;font-size:14px;line-height:1.6;transition:all var(--fade);position:relative;font-family: 'ZCOOL KuaiLe', sans-serif;}
-    .bubble.left{align-self:flex-start;background:var(--bubble-xiaoyi);border:1px solid rgba(229,225,255,.2);border-bottom-left-radius:8px}
-    .bubble.right{align-self:flex-end;background:var(--bubble-light);border-bottom-right-radius:8px}
-    
-    .bubble.loading::after {
-      content: ''; display: inline-block; width: 12px; height: 12px; margin-left: 8px; border: 2px solid rgba(255,255,255,.5); border-radius: 50%; border-top-color: transparent; vertical-align: middle; animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    
-    .composer{border-top:1px solid var(--border);padding:12px;display:flex;gap:10px;background:rgba(0,0,0,.25);align-items:center;border-bottom-left-radius:20px;border-bottom-right-radius:20px; padding-bottom: calc(12px + env(safe-area-inset-bottom));}
-    
-    .input{flex:1;border:1px solid var(--border);border-radius:16px;background:#111;color:#fff;padding:12px 18px;font-size:16px;outline:none;transition:all var(--fade);font-family: 'ZCOOL KuaiLe', sans-serif;}
-    .input:focus{border-color:var(--accent);background:#151515;box-shadow:0 0 0 1px rgba(229,225,255,.2)}
-    
-    .send-btn{border:1px solid var(--border);border-radius:16px;background:transparent;color:#fff;cursor:pointer;padding:0 18px;height:40px;font-size:14px;transition:all var(--fade);white-space:nowrap;font-family: 'ZCOOL KuaiLe', sans-serif;}
-    .send-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(229,225,255,.12)}
-    .send-btn:disabled{opacity:0.5;cursor:not-allowed;border-color:var(--border);color:#999;background:transparent}
-    
-    .voice-btn{width:40px;height:40px;border:1px solid var(--voice-btn-gray);border-radius:16px;background:var(--voice-btn-gray);color:#fff;cursor:not-allowed;display:flex;align-items:center;justify-content:center;position:relative;}
-    .voice-btn::after{content:attr(data-tip);position:absolute;right:-60px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--voice-tip-color);opacity:0;transition:opacity var(--fade);white-space:nowrap;}
-    .voice-btn:hover::after{opacity:1}
-    .voice-btn svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    
-    .chat-hint{width:min(820px,calc(100% - 32px));text-align:left;font-size:11px;color:var(--hint-text-color);padding-left:4px;margin-bottom:10px;font-family: 'ZCOOL KuaiLe', sans-serif;}
-    
-    .footer-center { position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 50; font-size: 12px; color: #666666; font-family: "ZCOOL KuaiLe", sans-serif; text-align: center; width: 100%; }
-    .footer-right { position: fixed; right: 20px; bottom: 10px; z-index: 50; font-size: 10px; color: #666666; font-family: "ZCOOL KuaiLe", sans-serif; }
-    
-    @media (max-width:768px){
-      .bg-layer { background-image: url('./images/bg-mobile.jpg'); background-position: center center; }
-      .chat-box { 
-        height: 62vh; 
-        width: calc(100% - 24px); 
-        margin-top: 20px; 
-      }
-      .shell { justify-content: flex-start; padding-top: 80px; }
-      .input { font-size: 16px; } 
-      .footer-center { font-size: 10px; bottom: 8px; }
-      .footer-right { display: none; }
-    }
+    .composer{ border-top:1px solid var(--border); padding:12px; display:flex; gap:10px; background:rgba(0,0,0,0.2); }
+    .input{ flex:1; background:#111; border:1px solid var(--border); border-radius:12px; color:#fff; padding:10px 15px; outline:none; font-family:inherit; }
+    .send-btn{ background:var(--accent); color:#000; border:none; border-radius:12px; padding:0 20px; cursor:pointer; font-family:inherit; }
   </style>
 </head>
 <body>
   <div class="bg-layer"></div>
-  
-  <div class="top-left">
-    <button id="menuBtn" class="icon-btn" aria-label="menu">☰</button>
-    <div id="navMenu" class="dropdown">
-      <a class="dropdown-item" href="index.html" data-i18n="nav.home">❤️ 首页</a>
-      <a class="dropdown-item" href="photos.html" data-i18n="nav.photos">📸 小怡的照片墙</a>
-      <a class="dropdown-item" href="letter.html" data-i18n="nav.letter">💌 给小怡的话</a>
-      <a class="dropdown-item active" href="chat.html" data-i18n="nav.chat">💬 和小怡聊聊天</a>
-    </div>
-  </div>
-
-  <div class="top-right">
-    <button id="langBtn" class="icon-btn" aria-label="language">
-      <svg class="globe-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="5" ry="9"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse></svg>
-    </button>
-    <div id="langMenu" class="dropdown">
-      <button class="dropdown-item" data-lang="zh">中文</button>
-      <button class="dropdown-item" data-lang="en">English</button>
-    </div>
-  </div>
-
   <main class="shell">
-    <section class="chat-box">
+    <div class="chat-box">
       <div id="messages" class="messages"></div>
       <form id="composer" class="composer">
-        <input id="msgInput" class="input" autocomplete="off" placeholder="输入你想说的话..." />
-        <button type="submit" class="send-btn" data-i18n="chat.send">发送</button>
-        <button type="button" class="voice-btn" disabled data-tip="即将上线">
-          <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-        </button>
+        <input id="msgInput" class="input" placeholder="输入你想说的话..." autocomplete="off">
+        <button type="submit" class="send-btn">发送</button>
       </form>
-    </section>
-    <div id="chatHint" class="chat-hint" data-i18n="chat.hint">每一句回复，皆基于 小怡 真实聊天记录与性格数据训练生成。</div>
+    </div>
   </main>
 
-  <p class="footer-center">欲把西湖比西子 浓妆淡抹总相宜</p>
-  <p class="footer-right">Designed by YJ Lee</p>
-
   <script>
-    const i18n={
-      zh:{
-        nav:{home:'❤️ 首页',photos:'📸 小怡的照片墙',letter:'💌 给小怡的话',chat:'💬 和小怡聊聊天'},
-        chat:{send:'发送',placeholder:'输入你想说的话...',voiceTip:'即将上线',hint:'每一句回复，皆基于 小怡 真实聊天记录与性格数据训练生成。'},
-        loading: '正在回复中...',
-        error: '哎呀，我这边系统有点小卡顿，暂时没法回复啦，等我缓一下再陪你聊～💛'
-      },
-      en:{
-        nav:{home:'❤️ Home',photos:'📸 Photos of Xiaoyi',letter:'💌 Words for Xiaoyi',chat:'💬 Chat with Xiaoyi'},
-        chat:{send:'Send',placeholder:'Type your message...',voiceTip:'Coming soon',hint:'Every reply is generated based on Xiaoyi\'s real chat records.'},
-        loading: 'Replying...',
-        error: 'Oops, my system is a bit laggy right now. Let\'s chat when I\'m ready~ 💛'
-      }
+    const i18n = {
+      zh: { loading: '正在回复中...', error: '哎呀，我这边系统有点小卡顿，等下再陪你聊～💛' },
+      en: { loading: 'Replying...', error: 'Oops, system is laggy. Let\'s chat later~ 💛' }
     };
-    
-    let currentLang = localStorage.getItem('selectedLanguage') || "zh";
-    const messages=[{side:'left',text: currentLang === 'zh' ? 'Hi，我是小怡！你今天过得怎么样呀？' : 'Hi, I\'m Xiaoyi! How was your day?'}];
-    
-    const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 
-    function renderMessages(){
-      const container = $('#messages');
-      container.innerHTML=messages.map(m=>`<div class="bubble ${m.side} ${m.loading ? 'loading' : ''}">${m.text}</div>`).join('');
-      container.scrollTop=container.scrollHeight;
+    let currentLang = "zh";
+    const msgContainer = document.getElementById('messages');
+    const msgInput = document.getElementById('msgInput');
+    const composer = document.getElementById('composer');
+
+    // 初始消息
+    addMessage('left', 'Hi，我是小怡！你今天过得怎么样呀？');
+
+    function addMessage(side, text, isLoading = false) {
+      const div = document.createElement('div');
+      div.className = `bubble ${side} ${isLoading ? 'loading' : ''}`;
+      div.textContent = text;
+      msgContainer.appendChild(div);
+      msgContainer.scrollTop = msgContainer.scrollHeight;
+      return div;
     }
 
-    function applyLang(){
-      const d=i18n[currentLang];
-      $$('[data-i18n]').forEach(el=>{
-        const [a,b]=el.dataset.i18n.split('.');
-        if(d[a] && d[a][b]) el.textContent=d[a][b];
-      });
-      $('#msgInput').placeholder=d.chat.placeholder;
-      $('.voice-btn').setAttribute('data-tip', d.chat.voiceTip);
-    }
-
-    async function getXiaoyiReply(userMsg) {
-      const d = i18n[currentLang];
-      messages.push({side:'left', text: d.loading, loading: true});
-      renderMessages();
-
+    async function getXiaoyiReply(text) {
+      const loadingBubble = addMessage('left', i18n[currentLang].loading, true);
+      
       try {
-        const response = await fetch('/api/chat', {
+        const res = await fetch('/api/chat', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({ message: userMsg, language: currentLang })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, language: currentLang })
         });
 
-        if (!response.ok) throw new Error("Server Error: " + response.status);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        
+        const result = await res.json();
+        loadingBubble.classList.remove('loading');
 
-        const result = await response.json();
-        messages.pop(); // 移除 loading 气泡
-
-        // 【增强版解析逻辑】自动匹配多种可能的 JSON 结构
-        let replyText = "";
-        if (result && result.data && result.data.reply) {
-          replyText = result.data.reply;
-        } else if (result && result.reply) {
-          replyText = result.reply;
-        } else if (result && result.code === 200 && result.data && result.data.reply === '') {
-          replyText = "我都有认真听哦🥰"; 
+        // 【关键】兼容多层级的 JSON 结构
+        if (result.data && result.data.reply) {
+          loadingBubble.textContent = result.data.reply;
+        } else if (result.reply) {
+          loadingBubble.textContent = result.reply;
         } else {
-          replyText = d.error;
+          loadingBubble.textContent = "我听着呢，怎么啦？🥰";
         }
-        return replyText;
-
-      } catch (error) {
-        console.error("Fetch failed:", error);
-        if (messages.length > 0 && messages[messages.length-1].loading) messages.pop();
-        return d.error;
+      } catch (err) {
+        console.error("Fetch Error:", err);
+        loadingBubble.classList.remove('loading');
+        loadingBubble.textContent = i18n[currentLang].error;
       }
     }
 
-    $('#menuBtn').addEventListener('click', e => { e.stopPropagation(); $('#navMenu').classList.toggle('open'); });
-    $('#langBtn').addEventListener('click', e => { e.stopPropagation(); $('#langMenu').classList.toggle('open'); });
-    document.addEventListener('click', () => { $('#navMenu').classList.remove('open'); $('#langMenu').classList.remove('open'); });
-
-    $$('[data-lang]').forEach(btn=>{
-      btn.addEventListener('click', () => {
-        currentLang=btn.dataset.lang;
-        localStorage.setItem('selectedLanguage', currentLang);
-        applyLang();
-        renderMessages();
-      });
-    });
-
-    $('#composer').addEventListener('submit', async e=>{
+    composer.onsubmit = e => {
       e.preventDefault();
-      const input=$('#msgInput'), sendBtn=$('.send-btn'), val=input.value.trim();
-      if(!val || sendBtn.disabled) return;
-
-      sendBtn.disabled = true; input.disabled = true;
-      messages.push({side:'right', text: val});
-      input.value=''; renderMessages();
-
-      const reply = await getXiaoyiReply(val);
-      messages.push({side:'left', text: reply});
-      renderMessages();
-
-      sendBtn.disabled = false; input.disabled = false;
-      setTimeout(() => input.focus(), 10);
-    });
-
-    applyLang(); 
-    renderMessages();
+      const val = msgInput.value.trim();
+      if (!val) return;
+      addMessage('right', val);
+      msgInput.value = '';
+      getXiaoyiReply(val);
+    };
   </script>
 </body>
 </html>
