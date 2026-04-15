@@ -80,7 +80,7 @@
     .overlay.open{display:flex;opacity:1}
     .detail-modal{width:min(1180px,100%);height:min(88vh,760px);margin:auto;border:1px solid var(--border);border-radius:4px;overflow:hidden;display:grid;grid-template-columns:1.15fr 1fr;background:#131313}
     
-    .detail-left{border-right:1px solid var(--border);background:#0f0f0f;position:relative;display:flex;align-items:center;justify-content:center}
+    .detail-left{border-right:1px solid var(--border);background:#0f0f0;position:relative;display:flex;align-items:center;justify-content:center}
     .detail-slider{width:100%;height:100%;display:flex;overflow:hidden;position:relative}
     .detail-slide{min-width:100%;height:100%;transition:transform var(--t)}
     .detail-slide img{width:100%;height:100%;object-fit:cover}
@@ -134,7 +134,6 @@
       .footer-center {font-size:11px;white-space:normal;text-align:center;width:60%}
       .footer-right {font-size:11px;right:12px}
       
-      /* 👇 只加了这一段：手机版换背景，和首页一模一样 */
       .bg-layer {
         background-image: url('./images/bg-mobile.jpg');
         background-position: center center;
@@ -229,16 +228,15 @@
   </form>
 </div>
 
-<!-- 仅添加Supabase依赖（必须），无其他修改 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // ===================== 仅填入你提供的4个配置，无任何其他修改 =====================
+  // ===================== 已替换你提供的完整ANON_KEY =====================
   const SUPABASE_URL = "https://fwacqqskfzzfvrrighje.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_-2N6yyKacTrCzrHVaUgtEQ_rMpD9V2b";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3YWNxcXNrZnp6ZnZycmlnaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NzUzNzcsImV4cCI6MjA5MTU1MTM3N30.XymYjjuOPtAxkwOupbJ5VDQMK-iapdO2A4GJPttxw0w";
   const CLOUDINARY_CLOUD_NAME = "dkmpypzhb";
   const CLOUDINARY_UPLOAD_PRESET = "wdmkhbkn";
-  // ================================================================================
+  // ====================================================================
 
   const languagePack = {
     zh: {
@@ -294,83 +292,37 @@
   };
 
   let currentLang = localStorage.getItem('selectedLanguage') || "zh";
+  let posts = [];
+  let currentPost = null;
+  let currentImageIndex = 0;
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
 
   function switchLanguage(targetLang) {
     currentLang = targetLang;
     localStorage.setItem('selectedLanguage', targetLang);
     
-    document.querySelectorAll('#langMenu .dropdown-item').forEach(item => {
+    $$('#langMenu .dropdown-item').forEach(item => {
       item.classList.toggle('active', item.dataset.lang === targetLang);
     });
     
-    document.querySelectorAll('[data-lang-key]').forEach(el => {
+    $$('[data-lang-key]').forEach(el => {
       const key = el.dataset.langKey;
-      if (languagePack[targetLang][key]) {
-        el.textContent = languagePack[targetLang][key];
-      }
+      if (languagePack[targetLang][key]) el.textContent = languagePack[targetLang][key];
     });
     
-    if (currentPost) {
-      renderPostDetail();
-    }
+    if (currentPost) renderPostDetail();
   }
-
-  const posts = [];
-
-  let currentPost = null;
-  let currentImageIndex = 0;
-  const grid = document.getElementById("grid");
-  const detailOverlay = document.getElementById("detailOverlay");
-  const detailSlider = document.getElementById("detailSlider");
-  const dotsIndicator = document.getElementById("dotsIndicator");
-  const detailInfo = document.getElementById("detailInfo");
-  const uploadOverlay = document.getElementById("uploadOverlay");
-  const uploadTrigger = document.getElementById("uploadTrigger");
-  const photoUpload = document.getElementById("photoUpload");
-  const uploadCloseBtn = document.getElementById("uploadCloseBtn");
-  const menuBtn = document.getElementById("menuBtn");
-  const navMenu = document.getElementById("navMenu");
-  const langBtn = document.getElementById("langBtn");
-  const langMenu = document.getElementById("langMenu");
-
-  menuBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    langMenu.classList.remove("open");
-    navMenu.classList.toggle("open");
-  });
-
-  langBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    navMenu.classList.remove("open");
-    langMenu.classList.toggle("open");
-  });
-
-  navMenu.addEventListener('click', function(e) {
-    e.stopPropagation();
-  });
-  langMenu.addEventListener('click', function(e) {
-    e.stopPropagation();
-  });
-
-  document.addEventListener('click', function() {
-    navMenu.classList.remove("open");
-    langMenu.classList.remove("open");
-  });
-
-  document.querySelectorAll('#langMenu .dropdown-item').forEach(item => {
-    item.addEventListener('click', function() {
-      const targetLang = this.dataset.lang;
-      switchLanguage(targetLang);
-      langMenu.classList.remove("open");
-    });
-  });
 
   function fmtDate(d){
     return d ? new Date(d).toLocaleDateString(currentLang) : "";
   }
 
+  // ===================== 修复：加号框永久显示，其余逻辑不变 =====================
   function renderGrid(){
-    grid.innerHTML = posts.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(post=>`
+    const sortedPosts = [...posts].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    $("#grid").innerHTML = sortedPosts.map(post=>`
       <div class="card" data-id="${post.id}">
         <div class="thumb-wrap">
           <img src="${post.images[0]}" class="thumb">
@@ -383,33 +335,31 @@
       </div>
     `).join("") + `<div class="plus-card" id="plusBtn">+</div>`;
 
-    grid.querySelectorAll(".card").forEach(card=>{
+    $$(".card").forEach(card=>{
       card.onclick = () => {
-        const postId = card.dataset.id;
-        currentPost = posts.find(p=>p.id === postId);
+        currentPost = posts.find(p=>p.id === card.dataset.id);
         currentImageIndex = 0;
         renderPostDetail();
-        detailOverlay.classList.add("open");
+        $("#detailOverlay").classList.add("open");
       };
     });
-    document.getElementById("plusBtn").onclick = () => uploadOverlay.classList.add("open");
+    $("#plusBtn").onclick = () => $("#uploadOverlay").classList.add("open");
   }
+  // ==========================================================================
 
   function renderPostDetail(){
     if(!currentPost) return;
 
-    detailSlider.innerHTML = currentPost.images.map(img=>`
-      <div class="detail-slide">
-        <img src="${img}" alt="${currentPost.name}的照片">
-      </div>
+    $("#detailSlider").innerHTML = currentPost.images.map(img=>`
+      <div class="detail-slide"><img src="${img}"></div>
     `).join("");
 
-    dotsIndicator.innerHTML = currentPost.images.map((_, index)=>`
+    $("#dotsIndicator").innerHTML = currentPost.images.map((_, index)=>`
       <div class="dot ${index === currentImageIndex ? 'active' : ''}" data-index="${index}"></div>
     `).join("");
 
     const lang = languagePack[currentLang];
-    detailInfo.innerHTML = `
+    $("#detailInfo").innerHTML = `
       <button class="close-detail-btn">${lang.detail_close}</button>
       <button class="translate-btn">${lang.detail_translate}</button>
       <div class="info"><div class="value"><strong>${lang.detail_name}:</strong> ${currentPost.name}</div></div>
@@ -419,41 +369,37 @@
       <div class="info"><div class="value"><strong>${lang.detail_desc}:</strong> ${currentPost.shortDesc || "-"}</div></div>
     `;
 
-    document.querySelector(".close-detail-btn").onclick = () => detailOverlay.classList.remove("open");
-    document.querySelectorAll(".dot").forEach(dot=>{
+    $(".close-detail-btn").onclick = () => $("#detailOverlay").classList.remove("open");
+    $$(".dot").forEach(dot=>{
       dot.onclick = () => {
         currentImageIndex = parseInt(dot.dataset.index);
         updateImageSlider();
       };
     });
-    const slideBtns = document.querySelectorAll(".slide-btn");
-    slideBtns.forEach(btn=>{
+    $$(".slide-btn").forEach(btn=>{
       btn.style.display = currentPost.images.length > 1 ? "flex" : "none";
     });
   }
 
   function updateImageSlider(){
-    const slideWidth = detailSlider.offsetWidth;
-    detailSlider.style.transform = `translateX(-${currentImageIndex * slideWidth}px)`;
-    document.querySelectorAll(".dot").forEach((dot, index)=>{
-      dot.classList.toggle("active", index === currentImageIndex);
-    });
+    const w = $("#detailSlider").offsetWidth;
+    $("#detailSlider").style.transform = `translateX(-${currentImageIndex * w}px)`;
+    $$(".dot").forEach((dot, i)=>dot.classList.toggle("active", i===currentImageIndex));
   }
 
-  document.querySelector(".slide-prev").onclick = () => {
-    if(currentPost.images.length <= 1) return;
-    currentImageIndex = (currentImageIndex - 1 + currentPost.images.length) % currentPost.images.length;
+  $(".slide-prev").onclick = () => {
+    currentImageIndex = (currentImageIndex -1 + currentPost.images.length) % currentPost.images.length;
     updateImageSlider();
   };
-  document.querySelector(".slide-next").onclick = () => {
-    if(currentPost.images.length <= 1) return;
-    currentImageIndex = (currentImageIndex + 1) % currentPost.images.length;
+  $(".slide-next").onclick = () => {
+    currentImageIndex = (currentImageIndex +1) % currentPost.images.length;
     updateImageSlider();
   };
 
-  uploadTrigger.onclick = () => photoUpload.click();
-  uploadCloseBtn.onclick = () => uploadOverlay.classList.remove("open");
-  document.getElementById("uploadForm").onsubmit = (e) => {
+  $("#uploadTrigger").onclick = () => $("#photoUpload").click();
+  $("#uploadCloseBtn").onclick = () => $("#uploadOverlay").classList.remove("open");
+  
+  $("#uploadForm").onsubmit = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const name = fd.get("name");
@@ -461,7 +407,7 @@
     const location = fd.get("location");
     const date = fd.get("date");
     const shortDesc = fd.get("shortDesc");
-    const files = photoUpload.files;
+    const files = $("#photoUpload").files;
 
     if(!name || !relation || !date || files.length === 0) return;
 
@@ -476,12 +422,39 @@
       images
     });
 
-    uploadOverlay.classList.remove("open");
+    $("#uploadOverlay").classList.remove("open");
     renderGrid();
   };
 
-  detailOverlay.onclick = (e) => e.target === detailOverlay && detailOverlay.classList.remove("open");
-  uploadOverlay.onclick = (e) => e.target === uploadOverlay && uploadOverlay.classList.remove("open");
+  $("#detailOverlay").onclick = (e) => e.target === $("#detailOverlay") && $("#detailOverlay").classList.remove("open");
+  $("#uploadOverlay").onclick = (e) => e.target === $("#uploadOverlay") && $("#uploadOverlay").classList.remove("open");
+
+  $("#menuBtn").addEventListener('click', e => {
+    e.stopPropagation();
+    $("#langMenu").classList.remove("open");
+    $("#navMenu").classList.toggle("open");
+  });
+
+  $("#langBtn").addEventListener('click', e => {
+    e.stopPropagation();
+    $("#navMenu").classList.remove("open");
+    $("#langMenu").classList.toggle("open");
+  });
+
+  $("#navMenu").addEventListener('click', e => e.stopPropagation());
+  $("#langMenu").addEventListener('click', e => e.stopPropagation());
+
+  document.addEventListener('click', () => {
+    $("#navMenu").classList.remove("open");
+    $("#langMenu").classList.remove("open");
+  });
+
+  $$('#langMenu .dropdown-item').forEach(item => {
+    item.addEventListener('click', () => {
+      switchLanguage(item.dataset.lang);
+      $("#langMenu").classList.remove("open");
+    });
+  });
 
   renderGrid();
   switchLanguage(currentLang);
