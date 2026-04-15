@@ -3,206 +3,184 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Words for Miyah</title>
+  <title>给小怡的话</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
   <style>
-    :root {--bg: #121212;--text: #ffffff;--accent: #E5E1FF;--muted: rgba(255,255,255,.75);--border: rgba(229,225,255,.45);--t: 0.3s ease;}
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: "ZCOOL KuaiLe", sans-serif; }
-    body { opacity: 0; animation: fadeIn var(--t) forwards; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    :root {--bg: #121111;--text: #ffffff;--accent: #E5E1FF;--muted: rgba(255,255,255,.7);--border: rgba(229,255,255,.4);--t: 0.3s ease;}
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:"ZCOOL KuaiLe", sans-serif}
+    body{opacity:0;animation:fadeIn .3s forwards}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
     .bg-layer {position: fixed;inset: 0;background-image: url('./images/bg.jpg');background-size: cover;background-position: right center;background-repeat: no-repeat;background-attachment: fixed;z-index: 0;}
     .bg-layer::after {content: "";position: absolute;inset: 0;background: rgba(0, 0, 0, 0.5);}
 
-    .top-nav {position: fixed;top: 24px;left: 0;right: 0;z-index: 999;display: flex;justify-content: space-between;align-items: center;padding: 0 24px;}
-    .top-left {position: relative;z-index: 1000;}
-    .top-right {position: relative;z-index: 1000;}
-    .icon-btn {border: none; background: transparent; color: #fff; font-size: 20px; line-height: 1;cursor: pointer; padding: 6px;transition: opacity var(--t), color var(--t);width: 36px;height: 36px;display: flex;align-items: center;justify-content: center;border-radius: 4px;}
-    .icon-btn:hover { opacity: 0.8; background: rgba(255,255,255,0.1);}
-    .dropdown {position: absolute; top: 42px;width: 168px;border: none;border-radius: 4px; background: transparent;box-shadow: none;display: none; overflow: hidden;z-index: 1001;transition: all 0.3s ease;}
-    #navMenu { left: 0; }
-    #langMenu { right: 0; left: auto; }
-    .dropdown.open { display: block; }
-    .dropdown-item {width: 100%; border: none; background: transparent; color: #fff; text-align: left;padding: 10px 12px; font-size: 14px; font-family: "ZCOOL KuaiLe", sans-serif;cursor: pointer; transition: background-color var(--t), color var(--t);text-decoration: none; display: block;}
-    .dropdown-item:hover { background: rgba(229,225,255,0.12); color: var(--accent);}
-    .dropdown-item.active { color: var(--accent); font-weight: 500; background: rgba(229,225,255,0.08);}
-    .globe-icon {width: 20px;height: 20px;display: block;stroke: #ffffff;stroke-width: 1.4;fill: none;}
+    .top-left{position:fixed;top:24px;left:24px;z-index:60}
+    .top-right{position:fixed;top:24px;right:24px;z-index:60}
+    .icon-btn{border:none;background:0 0;color:#fff;font-size:18px;cursor:pointer;font-family:"ZCOOL KuaiLe", sans-serif}
+    .globe-icon{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.4}
 
-    .shell {position: relative; z-index: 10; min-height: 100vh;padding: 88px 0 90px;}
-    .head {width: min(860px, calc(100% - 32px));margin: 0 auto 14px;display: flex;align-items: end;justify-content: space-between;gap: 12px;}
-    .title {margin: 0;font-family: "ZCOOL KuaiLe", sans-serif;font-size: 54px;font-weight: 400;line-height: 1;}
-    .subtitle {width: min(860px, calc(100% - 32px));margin: 0 auto 18px;color: var(--muted);font-size: 14px;}
-    .cards {width: min(860px, calc(100% - 32px));margin: 0 auto;display: flex;flex-direction: column;gap: 12px;}
-    .card {border: 1px solid var(--border);border-radius: 4px;background: rgba(229,225,255,0.05);padding: 12px;transition: border-color var(--t), background-color var(--t), opacity var(--t);position: relative;}
-    .card:hover { border-color: var(--accent); background: rgba(229,225,255,0.1); }
-    .meta {display: flex;flex-wrap: wrap;gap: 8px;align-items: center;margin-bottom: 8px;color: var(--accent);font-size: 12px;}
-    .meta-separator::before {content: "·"; margin-right: 8px; color: var(--accent); }
-    .msg { margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; transition: color var(--t);margin-bottom: 8px;}
-    .translate-mini {border: 1px solid var(--border); border-radius: 4px;background: transparent; color: #fff; font-size: 12px; padding: 5px 8px;cursor: pointer; transition: border-color var(--t), color var(--t), background-color var(--t);font-family: "ZCOOL KuaiLe", sans-serif;position: absolute;bottom: 12px;right: 12px;}
-    .translate-mini:hover { border-color: var(--accent); color: var(--accent); background: rgba(229,225,255,0.12); }
-    .letter-delete-btn{position:absolute;top:8px;right:8px;background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:12px;color:#fff;cursor:pointer;font-family: "ZCOOL KuaiLe", sans-serif;}
-    .letter-delete-btn:hover{border-color:var(--accent);color:var(--accent)}
-
-    .add-btn-container {width: min(860px, calc(100% - 32px));margin: 16px auto 0;}
-    .plus-btn {border: 1px solid var(--border); border-radius: 4px; background: rgba(229,225,255,0.06);color: var(--accent); width: 100%;height: auto;padding: 12px;font-size: 28px; line-height: 1;cursor: pointer; transition: border-color var(--t), background-color var(--t), color var(--t);}
-    .overlay {position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.88);display: none; opacity: 0; transition: opacity var(--t); padding: 20px;}
-    .overlay.open { display: flex; opacity: 1; }
-    .modal {width: min(650px, 100%);margin: auto;border: 1px solid var(--border);border-radius: 4px;background: #131313;padding: 16px;display: flex;flex-direction: column;gap: 10px;position: relative;}
-    .modal-title {margin: 0;font-family: "ZCOOL KuaiLe", sans-serif;font-size: 40px;font-weight: 400;line-height: 1;}
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    .field span { color: var(--accent); font-size: 12px; }
-    .input, .textarea {border: 1px solid var(--border);border-radius: 4px;background: #101010;color: #fff;font-size: 14px;font-family: "ZCOOL KuaiLe", sans-serif;padding: 10px;outline: none;transition: border-color var(--t), background-color var(--t);}
-    .input:focus, .textarea:focus { border-color: var(--accent); background: #151515; }
-    .textarea { min-height: 120px; resize: vertical; }
-    .actions {display: flex;justify-content: flex-end;gap: 8px;margin-top: 8px;}
-    .btn {border: 1px solid var(--border);border-radius: 4px;background: transparent;color: #fff;font-size: 13px;font-family: "ZCOOL KuaiLe", sans-serif;padding: 8px 12px;cursor: pointer;transition: border-color var(--t), color var(--t), background-color var(--t);}
-    .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(229,225,255,0.12); }
-    .close-btn {position: absolute;top: 16px;right: 16px;border: 1px solid var(--border);background: transparent;color: #fff;font-size: 18px;padding: 4px 8px;cursor: pointer;z-index: 10;font-family: "ZCOOL KuaiLe", sans-serif;}
-    .close-btn:hover{border-color: var(--accent);color: var(--accent);}
-
-    .footer {position: fixed;left: 50%;transform: translateX(-50%);bottom: 20px;z-index: 50;margin: 0;font-size: 12px;color: #666666;font-family: "ZCOOL KuaiLe", sans-serif;text-align: center;padding: 0 12px;white-space: nowrap;}
-    .footer-right {position: fixed;right: 20px;bottom: 20px;z-index: 50;margin: 0;font-size: 12px;color: #666666;font-family: "ZCOOL KuaiLe", sans-serif;}
-    .toast {position: fixed;bottom: 80px;left: 50%;transform: translateX(-50%);z-index: 100;background: rgba(229,225,255,0.15);border: 1px solid var(--accent);border-radius: 4px;padding: 8px 16px;color: var(--accent);font-size: 14px;opacity: 0;transition: opacity var(--t);font-family: "ZCOOL KuaiLe", sans-serif;}
-    .toast.show { opacity: 1; }
-
-    @media (max-width: 768px) {
-      .title { font-size: 42px; }
-      .footer { bottom: 16px; white-space: normal; max-width: 80%;}
-      .footer-right { display: none; }
-      .meta { flex-direction: row; flex-wrap: wrap; }
-      .add-btn-container { margin-top: 12px; }
-      
-      /* 👇 只加了这一段：手机版换背景，和首页一模一样 */
-      .bg-layer {
-        background-image: url('./images/bg-mobile.jpg');
-        background-position: center center;
-      }
+    .dropdown{
+      position:absolute;top:30px;width:168px;border:none;border-radius:4px;background:transparent;
+      backdrop-filter:none;overflow:hidden;opacity:0;visibility:hidden;transition:all 0.3s ease;
     }
+    .dropdown.open{opacity:1;visibility:visible}
+    #navMenu{left:0}#langMenu{right:0}
+    .dropdown-item{width:100%;border:none;background:0 0;color:#fff;padding:10px 12px;font-size:14px;cursor:pointer;transition:all var(--t);display:block;text-decoration:none;font-family:"ZCOOL KuaiLe", sans-serif}
+    .dropdown-item:hover{background:rgba(229,225,255,.12)}
+    .dropdown-item.active{color:var(--accent)}
+
+    .shell {position: relative; z-index: 10; min-height: 100vh;padding: 80px 0 90px;}
+    .topbar {margin:0 100px 14px 200px}
+    .title {margin: 0; font-size: 52px; font-weight: 500; letter-spacing: 1px;}
+    .subtitle {margin:0 100px 20px 200px; color: var(--muted); font-size: 14px;}
+    
+    .cards {width: min(860px, calc(100% - 32px)); margin: 0 auto; display: flex; flex-direction: column; gap: 12px;}
+    .card {border: 1px solid var(--border); border-radius: 4px; background: rgba(229,225,255,0.05); padding: 16px; position: relative;}
+    .card:hover { border-color: var(--accent); }
+    .meta {color: var(--accent); font-size: 12px; margin-bottom: 8px;}
+    .msg {font-size: 14px; line-height: 1.6; white-space: pre-wrap;}
+
+    .add-btn-container {width: min(860px, calc(100% - 32px)); margin: 20px auto 0;}
+    .plus-btn {border: 1px dashed var(--border); border-radius: 4px; background: rgba(229,225,255,0.03); color: var(--accent); width: 100%; padding: 16px; font-size: 32px; cursor: pointer; transition: all var(--t);}
+    .plus-btn:hover { border-color: var(--accent); background: rgba(229,225,255,0.08); }
+
+    .overlay {position: fixed; inset: 0; z-index: 99; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity var(--t); padding: 20px;}
+    .overlay.open { display: flex; opacity: 1; }
+    .modal {width: min(600px, 100%); background: #131313; border: 1px solid var(--border); border-radius: 4px; padding: 24px; display: flex; flex-direction: column; gap: 16px; position: relative;}
+    .close-btn {position: absolute; top: 18px; right: 18px; border: none; background: transparent; color: #fff; font-size: 18px; cursor: pointer;}
+    .input, .textarea {border: 1px solid var(--border); border-radius: 4px; background: #101010; color: #fff; padding: 10px; outline: none; font-family: inherit; transition: border-color var(--t);}
+    .input:focus, .textarea:focus { border-color: var(--accent); }
+    .textarea { min-height: 150px; }
+    .btn {border: 1px solid var(--border); border-radius: 4px; background: transparent; color: #fff; font-size: 13px; padding: 8px 12px; cursor: pointer; transition: all var(--t); font-family: inherit;}
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(229,225,255,0.12); }
+    
+    .footer-center {position: fixed; left: 50%; transform: translateX(-50%); bottom: 20px; z-index: 50; font-size: 12px; color: #999;}
+    .footer-right {position: fixed; right: 24px; bottom: 20px; color: #999; font-size: 12px; z-index: 50;}
+
+    @media(max-width:1024px){.topbar, .subtitle {margin-left: 30px; margin-right: 30px;}}
   </style>
 </head>
 <body>
   <div class="bg-layer"></div>
-  <div class="top-nav">
-    <div class="top-left"><button id="menuBtn" class="icon-btn">☰</button><div id="navMenu" class="dropdown"><a class="dropdown-item" href="index.html" data-i18n="nav.home">首页 🏠</a><a class="dropdown-item" href="photos.html" data-i18n="nav.photos">Miyah的照片墙 📸</a><a class="dropdown-item active" href="letter.html" data-i18n="nav.letter">给小怡的话 💌</a><a class="dropdown-item" href="chat.html" data-i18n="nav.chat">和Miyah聊天 💬</a></div></div>
-    <div class="top-right"><button id="langBtn" class="icon-btn"><svg class="globe-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="5" ry="9"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse></svg></button><div id="langMenu" class="dropdown"><button class="dropdown-item" data-lang="zh">中文</button><button class="dropdown-item" data-lang="en">English</button></div></div>
+
+  <div class="top-left">
+    <button id="menuBtn" class="icon-btn">☰</button>
+    <div id="navMenu" class="dropdown">
+      <a class="dropdown-item" href="index.html">❤️ 首页</a>
+      <a class="dropdown-item" href="photos.html">📸 小怡的照片墙</a>
+      <a class="dropdown-item active" href="letter.html">💌 给小怡的话</a>
+      <a class="dropdown-item" href="chat.html">💬 和小怡聊天</a>
+    </div>
+  </div>
+  
+  <div class="top-right">
+    <button id="langBtn" class="icon-btn">
+      <svg class="globe-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><ellipse cx="12" cy="12" rx="5" ry="9"></ellipse><ellipse cx="12" cy="12" rx="9" ry="3.8"></ellipse></svg>
+    </button>
+    <div id="langMenu" class="dropdown">
+      <button class="dropdown-item" data-lang="zh">中文</button>
+      <button class="dropdown-item" data-lang="en">English</button>
+    </div>
   </div>
 
   <main class="shell">
-    <div class="head"><h1 id="titleText" class="title">给小怡的话</h1></div>
-    <p id="subText" class="subtitle">写下你想对她说的话</p>
+    <div class="topbar"><h1 class="title">给小怡的话</h1></div>
+    <p class="subtitle">写下你想对她说的话</p>
     <section id="cards" class="cards"></section>
     <div class="add-btn-container"><button id="openFormBtn" class="plus-btn" type="button">+</button></div>
   </main>
 
-  <p class="footer" data-i18n="footer.text">欲把西湖比西子 浓妆淡抹总相宜</p>
+  <p class="footer-center">欲把西湖比西子 浓妆淡抹总相宜</p>
   <p class="footer-right">Designed by YJ Lee</p>
-  <div id="toast" class="toast">提交成功！</div>
 
   <div id="formOverlay" class="overlay">
     <form id="messageForm" class="modal">
       <button id="closeFormBtn" type="button" class="close-btn">✕</button>
-      <h2 id="modalTitle" class="modal-title">写下你想对她说的话</h2>
-      <label class="field"><span data-i18n="form.name">你的名字</span><input class="input" name="name" required /></label>
-      <label class="field"><span data-i8n="form.country">国家/地区</span><input class="input" name="country" /></label>
-      <label class="field"><span data-i18n="form.message">想对她说的话</span><textarea class="textarea" name="message" required></textarea></label>
-      <div class="actions"><button type="submit" class="btn" data-i18n="common.submit">提交</button></div>
+      <h2 style="margin:0 0 10px; font-size: 32px;">写下你想说的话</h2>
+      <input class="input" name="userName" placeholder="你的名字" required />
+      <input class="input" name="userCountry" placeholder="国家/地区" />
+      <textarea class="textarea" name="userMessage" placeholder="此刻的心情..." required></textarea>
+      <div style="text-align:right"><button type="submit" id="submitBtn" class="btn">提交留言</button></div>
     </form>
   </div>
 
-<!-- 仅添加Supabase依赖 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-    // 仅填入你的Supabase配置，无其他修改
+  (function() {
     const SUPABASE_URL = "https://fwacqqskfzzfvrrighje.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_-2N6yyKacTrCzrHVaUgtEQ_rMpD9V2b";
-    const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3YWNxcXNrZnp6ZnZycmlnaGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NzUzNzcsImV4cCI6MjA5MTU1MTM3N30.XymYjjuOPtAxkwOupbJ5VDQMK-iapdO2A4GJPttxw0w";
+    
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const $ = s => document.querySelector(s);
 
-    const i18n = {
-      zh: {nav: { home: "首页 🏠", photos: "Miyah的照片墙 📸", letter: "给小怡的话 💌", chat: "和Miyah聊天 💬" },title: "给小怡的话",subtitle: "写下你想对她说的话",form: { name: "你的名字", country: "国家/地区", message: "想对她说的话" },card: { from: "来自", translate: "查看翻译" },common: { submit: "提交", close: "✕" },toast: "提交成功！",footer: { text: "欲把西湖比西子 浓妆淡抹总相宜" }},
-      en: {nav: { home: "Home 🏠", photos: "Photos of Miyah 📸", letter: "Words for Xiaoyi 💌", chat: "Chat with Miyah 💬" },title: "Words for Xiaoyi",subtitle: "Write something to her",form: { name: "Your name", country: "Country/Region", message: "Words to her" },card: { from: "From", translate: "View translation" },common: { submit: "Submit", close: "✕" },toast: "Submitted successfully!",footer: { text: "欲把西湖比西子 浓妆淡抹总相宜" }}
+    async function loadLetters() {
+      const { data, error } = await _supabase.from('letters').select('*').order('created_at', { ascending: false });
+      if(error) { console.error("加载失败:", error); return; }
+      $('#cards').innerHTML = (data || []).map(m => `
+        <div class="card">
+          <div class="meta"><span>来自：${m.name || '匿名'}</span>${m.country ? ` · ${m.country}` : ''}</div>
+          <div class="msg">${m.content || ''}</div>
+        </div>
+      `).join('');
+    }
+
+    $('#messageForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = $('#submitBtn');
+      btn.disabled = true;
+      btn.textContent = "发送中...";
+
+      const fd = new FormData(e.target);
+      // 注意：这里的字段名必须和 Supabase 表里的字段名一模一样
+      const { error } = await _supabase.from('letters').insert([{ 
+        name: fd.get("userName"), 
+        country: fd.get("userCountry"), 
+        content: fd.get("userMessage") 
+      }]);
+
+      if(error) {
+        alert("提交失败，请检查 Supabase 权限 (RLS) 或字段名。错误详情：" + error.message);
+        btn.disabled = false;
+        btn.textContent = "提交留言";
+      } else {
+        $('#formOverlay').classList.remove('open');
+        setTimeout(() => { $('#formOverlay').style.display = 'none'; }, 300);
+        e.target.reset();
+        btn.disabled = false;
+        btn.textContent = "提交留言";
+        loadLetters();
+      }
     };
 
-    let messages = [];
-    let currentLang = localStorage.getItem('selectedLanguage') || "zh";
-    const cards = document.getElementById("cards");
-    const langMenu = document.getElementById("langMenu");
-    const langBtn = document.getElementById("langBtn");
-    const menuBtn = document.getElementById("menuBtn");
-    const navMenu = document.getElementById("navMenu");
-    const formOverlay = document.getElementById("formOverlay");
-    const toast = document.getElementById("toast");
+    $('#openFormBtn').onclick = () => {
+      $('#formOverlay').style.display = 'flex';
+      setTimeout(() => $('#formOverlay').classList.add('open'), 10);
+    };
+    $('#closeFormBtn').onclick = () => {
+      $('#formOverlay').classList.remove('open');
+      setTimeout(() => { $('#formOverlay').style.display = 'none'; }, 300);
+    };
 
-    // 从Supabase加载留言
-    async function loadLetters() {
-      try {
-        const { data, error } = await supabase
-          .from('letters')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
-        messages = data || [];
-        renderCards();
-      } catch (err) {
-        console.log('加载留言失败', err);
-      }
-    }
-    // 删除Supabase留言
-    async function deleteLetter(id){
-      if(!confirm('确定删除这条留言？'))return;
-      try{
-        const { error } = await supabase.from('letters').delete().eq('id', id);
-        if (error) throw error;
-        loadLetters();
-      }catch(err){
-        alert('删除失败');
-      }
-    }
-    function setActiveNavItem() {const currentPath = window.location.pathname.split("/").pop() || "index.html";navMenu.querySelectorAll(".dropdown-item").forEach(item=>{const href=item.getAttribute("href");if(href===currentPath){item.classList.add("active");}else{item.classList.remove("active");}});}
-    
-    function applyLang() {const d=i18n[currentLang];document.getElementById("titleText").textContent=d.title;document.getElementById("subText").textContent=d.subtitle||"写下你想对她说的话";document.getElementById("modalTitle").textContent=d.subtitle||"写下你想对她说的话";toast.textContent=d.toast||"提交成功！";document.querySelectorAll("[data-i18n]").forEach((el)=>{const keys=el.getAttribute("data-i18n").split(".");let value=d;keys.forEach((k)=>value=value?.[k]);if(typeof value==="string")el.textContent=value;});document.querySelectorAll("[data-lang]").forEach((btn)=>{btn.classList.toggle("active",btn.dataset.lang===currentLang);});renderCards();setActiveNavItem();}
+    const setupMenu = (btn, menu) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('open');
+        (menu === $('#navMenu') ? $('#langMenu') : $('#navMenu')).classList.remove('open');
+      };
+    };
+    setupMenu($('#menuBtn'), $('#navMenu'));
+    setupMenu($('#langBtn'), $('#langMenu'));
 
-    function renderCards() {const d=i18n[currentLang];const sorted=[...messages].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));cards.innerHTML=sorted.map((m)=>`<article class="card" data-id="${m.id}"><button class="letter-delete-btn" onclick="deleteLetter('${m.id}')">删除</button><div class="meta"><span>${m.name}</span><span class="meta-separator">${d.card.from}: ${m.country||"-"}</span><span class="meta-separator">${new Date(m.created_at).toLocaleString()}</span></div><p class="msg">${m.content}</p><button class="translate-mini" type="button">${d.card.translate}</button></article>`).join("");
-      cards.querySelectorAll(".card").forEach((card)=>{const id=card.dataset.id;const msg=messages.find((x)=>x.id===id);const btn=card.querySelector(".translate-mini");const p=card.querySelector(".msg");let isTranslated=false;btn.addEventListener("click",()=>{isTranslated=!isTranslated;p.textContent=isTranslated?msg.content:msg.content;p.style.color=isTranslated?'var(--accent)':"inherit";});});}
+    document.onclick = () => {
+      $('#navMenu').classList.remove('open');
+      $('#langMenu').classList.remove('open');
+    };
 
-    function showToast() {toast.classList.add("show");setTimeout(()=>{toast.classList.remove("show");},2000);}
-    function openForm() { formOverlay.classList.add("open"); document.querySelector(".input[name='name']").focus();}
-    function closeForm() { formOverlay.classList.remove("open"); }
-    document.getElementById("openFormBtn").addEventListener("click", openForm);
-    document.getElementById("closeFormBtn").addEventListener("click", closeForm);
-    formOverlay.addEventListener("click",(e)=>{if(e.target===formOverlay)closeForm();});
-    // 提交留言到Supabase
-    document.getElementById("messageForm").addEventListener("submit",async(e)=>{
-      e.preventDefault();
-      const fd=new FormData(e.currentTarget);
-      const name=String(fd.get("name")||"").trim();
-      const country=String(fd.get("country")||"").trim();
-      const message=String(fd.get("message")||"").trim();
-      if(!name||!message){alert(i18n[currentLang].common.submit+"失败：请填写必填项！");return;}
-      try{
-        const { error } = await supabase.from('letters').insert([
-          { name, country, content: message }
-        ]);
-        if (error) throw error;
-        e.currentTarget.reset();
-        closeForm();
-        loadLetters();
-        showToast();
-      }catch(err){
-        alert("提交失败，请重试");
-        console.error(err);
-      }
-    });
-    langBtn.addEventListener("click",(e)=>{e.stopPropagation();langMenu.classList.toggle("open");navMenu.classList.remove("open");});
-    document.querySelectorAll("[data-lang]").forEach((btn)=>{btn.addEventListener("click",()=>{currentLang=btn.dataset.lang;localStorage.setItem('selectedLanguage',currentLang);applyLang();langMenu.classList.remove("open");});});
-    menuBtn.addEventListener("click",(e)=>{e.stopPropagation();navMenu.classList.toggle("open");langMenu.classList.remove("open");});
-    navMenu.querySelectorAll("a").forEach((a)=>{a.addEventListener("click",()=>{navMenu.classList.remove("open");});});
-    document.addEventListener("click",(e)=>{if(!langMenu.contains(e.target)&&e.target!==langBtn){langMenu.classList.remove("open");}if(!navMenu.contains(e.target)&&e.target!==menuBtn){navMenu.classList.remove("open");}});
-    document.querySelectorAll("[data-lang]").forEach((btn)=>{btn.classList.toggle("active",btn.dataset.lang===currentLang);});
-    setActiveNavItem();loadLetters();applyLang();
-  </script>
+    loadLetters();
+  })();
+</script>
 </body>
 </html>
