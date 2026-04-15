@@ -11,7 +11,7 @@
     :root{
       --bg:#121212;
       --text:#fff;
-      --accent:#E51FF;
+      --accent:#E5E1FF;
       --bubble-dark:rgba(229,225,255,.12);
       --bubble-light:rgba(229,225,255,.28);
       --bubble-xiaoyi:rgba(45, 45, 85, 0.4);
@@ -242,24 +242,24 @@
           body: JSON.stringify({ message: userMsg, language: currentLang })
         });
 
-        // 【更新】增加 HTTP 状态验证
-        if (!response.ok) {
-           throw new Error("Server Error: " + response.status);
-        }
+        if (!response.ok) throw new Error("Server Error: " + response.status);
 
         const result = await response.json();
-        messages.pop(); // 移除 loading
+        messages.pop(); // 移除 loading 气泡
 
-        // 【核心优化】多级数据结构兼容，确保能拿到 reply
-        if (result && result.code === 200 && result.data && result.data.reply) {
-          return result.data.reply;
+        // 【增强版解析逻辑】自动匹配多种可能的 JSON 结构
+        let replyText = "";
+        if (result && result.data && result.data.reply) {
+          replyText = result.data.reply;
         } else if (result && result.reply) {
-          return result.reply;
-        } else if (result && result.data && result.data.reply === '') {
-          return "我都有认真听哦🥰"; // 后端匹配不到时的保底
+          replyText = result.reply;
+        } else if (result && result.code === 200 && result.data && result.data.reply === '') {
+          replyText = "我都有认真听哦🥰"; 
         } else {
-          return d.error;
+          replyText = d.error;
         }
+        return replyText;
+
       } catch (error) {
         console.error("Fetch failed:", error);
         if (messages.length > 0 && messages[messages.length-1].loading) messages.pop();
