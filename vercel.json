@@ -6,11 +6,16 @@
       "use": "@vercel/node"
     },
     {
+      "src": "chat.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "**/*.+(html|css|js|png|jpg|jpeg|gif|svg|ico)",
       "use": "@vercel/static"
     }
   ],
   "routes": [
+    { "src": "/api/chat", "dest": "/chat.js" },   // ✅ 新增（必须放最前）
     { "src": "/api/(.*)", "dest": "/server.js" },
     { "src": "/(.*\\.(html|css|js|png|jpg|jpeg|gif|svg|ico))$", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/server.js" }
