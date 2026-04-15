@@ -227,7 +227,6 @@
       $('.voice-btn').setAttribute('data-tip', d.chat.voiceTip);
     }
 
-    // 【关键修复】优化了请求和容错判断逻辑
     async function getXiaoyiReply(userMsg) {
       const d = i18n[currentLang];
       messages.push({side:'left', text: d.loading, loading: true});
@@ -240,32 +239,30 @@
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          body: JSON.stringify({ 
-            message: userMsg, 
-            language: currentLang 
-          })
+          body: JSON.stringify({ message: userMsg, language: currentLang })
         });
 
-        // 如果 HTTP 状态不正常，直接抛错
-        if(!response.ok) throw new Error("HTTP Status " + response.status);
+        // 【更新】增加 HTTP 状态验证
+        if (!response.ok) {
+           throw new Error("Server Error: " + response.status);
+        }
 
         const result = await response.json();
-        messages.pop(); // 移除 loading 泡泡
+        messages.pop(); // 移除 loading
 
-        // 强容错：尝试多种可能的数据结构获取回复
+        // 【核心优化】多级数据结构兼容，确保能拿到 reply
         if (result && result.code === 200 && result.data && result.data.reply) {
           return result.data.reply;
         } else if (result && result.reply) {
           return result.reply;
+        } else if (result && result.data && result.data.reply === '') {
+          return "我都有认真听哦🥰"; // 后端匹配不到时的保底
         } else {
-          console.error("数据结构不符合预期:", result);
           return d.error;
         }
       } catch (error) {
-        console.error("请求失败:", error);
-        if (messages.length > 0 && messages[messages.length-1].loading) {
-          messages.pop();
-        }
+        console.error("Fetch failed:", error);
+        if (messages.length > 0 && messages[messages.length-1].loading) messages.pop();
         return d.error;
       }
     }
